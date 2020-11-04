@@ -114,7 +114,7 @@ class CoverFlowLayoutManger private constructor(
         mHasAttachedItems.clear()
         //得到子view的宽和高，这边的item的宽高都是一样的，所以只需要进行一次测量
         val scrap = recycler.getViewForPosition(0)
-        addView(scrap)
+   //     addView(scrap)
         measureChildWithMargins(scrap, 0, 0)
 
         //计算测量布局的宽高
@@ -130,8 +130,7 @@ class CoverFlowLayoutManger private constructor(
             if (frame == null) {
                 frame = Rect()
             }
-            frame[offset.roundToInt(), mStartY, (offset + mDecoratedChildWidth).roundToInt()] =
-                mStartY + mDecoratedChildHeight
+            frame.set(offset.roundToInt(), mStartY, (offset + mDecoratedChildWidth).roundToInt(), mStartY + mDecoratedChildHeight)
             mAllItemFrames.put(i, frame)
             mHasAttachedItems.put(i, false)
             offset += intervalDistance //原始位置累加，否则越后面误差越大
