@@ -46,6 +46,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
 
     private void intiCoverFlow(final ViewHolder holder) {
         holder.coverFlow.setAdapter(new Adapter(holder.itemView.getContext(), false));
+        holder.coverFlow.setLoop();
         holder.coverFlow.setOnItemSelectedListener(new CoverFlowLayoutManger.OnSelected() {
             @Override
             public void onItemSelected(int position) {
@@ -63,7 +64,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
 
     @Override
     public int getItemViewType(int position) {
-        if (position == 0) {
+        if (position <= 10) {
             return TYPE_COVER_FLOW;
         } else {
             return TYPE_TEXT;

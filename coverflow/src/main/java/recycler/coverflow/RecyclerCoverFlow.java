@@ -19,6 +19,7 @@ public class RecyclerCoverFlow extends RecyclerView {
      * 按下的X轴坐标
      */
     private float mDownX;
+    private float mDownY;
 
     /**
      * 布局器构建者
@@ -172,6 +173,7 @@ public class RecyclerCoverFlow extends RecyclerView {
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 mDownX = ev.getX();
+                mDownY = ev.getY();
                 getParent().requestDisallowInterceptTouchEvent(true); //设置父类不拦截滑动事件
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -182,7 +184,11 @@ public class RecyclerCoverFlow extends RecyclerView {
                     getParent().requestDisallowInterceptTouchEvent(false);
                 } else {
                     //滑动到中间，设置父类不拦截滑动事件
-                    getParent().requestDisallowInterceptTouchEvent(true);
+                    if(Math.abs(ev.getX() - mDownX) > Math.abs(ev.getY() - mDownY)) {
+                        getParent().requestDisallowInterceptTouchEvent(true);
+                    }else {
+                        getParent().requestDisallowInterceptTouchEvent(false);
+                    }
                 }
                 break;
         }
