@@ -5,7 +5,7 @@
     android:layout_centerInParent="true">
     <ImageView
         android:id="@+id/img"
-        android:layout_width="300dp"
-        android:layout_height="100dp"
+        android:layout_width="150dp"
+        android:layout_height="200dp"
         android:scaleType="centerCrop"/>
 </androidx.cardview.widget.CardView>

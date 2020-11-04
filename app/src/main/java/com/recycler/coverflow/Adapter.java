@@ -47,6 +47,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
         Glide.with(mContext).load(mColors[position]).into(holder.img);
+        holder.itemView.setTag(-1, position);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
