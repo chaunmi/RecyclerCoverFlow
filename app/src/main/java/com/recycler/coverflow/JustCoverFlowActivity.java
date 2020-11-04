@@ -1,8 +1,12 @@
 package com.recycler.coverflow;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.util.Log;
 import android.widget.TextView;
+
+import com.recycler.coverflow.viewpager.KotlinUtilsKt;
 
 import recycler.coverflow.CoverFlowLayoutManger;
 import recycler.coverflow.RecyclerCoverFlow;
@@ -29,6 +33,7 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
             @Override
             public void onItemSelected(int position) {
                 ((TextView)findViewById(R.id.index)).setText((position+1)+"/"+mList.getLayoutManager().getItemCount());
+                Log.i(KotlinUtilsKt.TAG, " itemCount: " + mList.getLayoutManager().getItemCount() + ", position: " + position);
             }
         });
     }

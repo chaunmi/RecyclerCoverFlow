@@ -12,12 +12,12 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.util.AttributeSet;
 
 import com.bumptech.glide.load.resource.bitmap.GlideBitmapDrawable;
 
-public class MirrorView extends android.support.v7.widget.AppCompatImageView {
+public class MirrorView extends androidx.appcompat.widget.AppCompatImageView {
 
     public MirrorView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
