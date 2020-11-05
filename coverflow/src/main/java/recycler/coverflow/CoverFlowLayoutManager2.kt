@@ -16,10 +16,30 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+/**
+ * 1、支持循环模式和非循环模式
+ * 2、支持自定义设置卡片之间的间距
+ * 3、支持滚动到指定位置
+ * 4、支持连续滑动或者一次仅能滑动一张
+ * 5、支持自定义layout大小和位置及各种操作
+ */
 class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
 
+    var maxCount = 0 //屏幕上最多显示多少个itemView
+
+    var itemTotalCount = 0
+
+    var itemSpace = 24 //每个itemView之间的间隔空隙
+
+    var hasInit = false  //初始化参数
+
+    private var itemWidth = 0
+
+    private var itemHeight = 0
+
+
     /**滑动总偏移量 */
-    private var mOffsetAll = 0
+    private var scrollOffsetAll = 0
 
     /**Item宽 */
     private var mDecoratedChildWidth = 0
@@ -76,9 +96,11 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
     private var mIsLoop = false
 
 
-    public constructor(  isFlat: Boolean, isGreyItem: Boolean,
-                  isAlphaItem: Boolean, cstInterval: Float,
-                  isLoop: Boolean, is3DItem: Boolean): super() {
+    public constructor(
+        isFlat: Boolean, isGreyItem: Boolean,
+        isAlphaItem: Boolean, cstInterval: Float,
+        isLoop: Boolean, is3DItem: Boolean
+    ): super() {
         mIsFlatFlow = isFlat
         mItemGradualGrey = isGreyItem
         mItemGradualAlpha = isAlphaItem
@@ -99,45 +121,42 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
         )
     }
 
+    private fun initParams() {
+        if (!hasInit || itemWidth <= 0 || itemCount == 0) {  //初始化相关参数
+            itemWidth = horizontalSpace - (maxCount - 1) * itemSpace
+            itemHeight = verticalSpace
+            hasInit = itemWidth > 0
+        }
+    }
+
+    private fun checkItemReady(): Boolean {
+        if (itemWidth == 0 || itemCount == 0) {
+            initParams()
+            if (itemWidth <= 0 || itemCount == 0) {
+                return false
+            }
+        }
+        return true
+    }
+
+
     override fun onLayoutChildren(recycler: RecyclerView.Recycler, state: RecyclerView.State) {
         //如果没有item，直接返回
-        //跳过preLayout，preLayout主要用于支持动画
-        if (itemCount <= 0 || state.isPreLayout) {
-            mOffsetAll = 0
+        if (itemCount <= 0) {
+            scrollOffsetAll = 0
+            removeAndRecycleAllViews(recycler)
             return
         }
-        mAllItemFrames.clear()
-        mHasAttachedItems.clear()
-        Log.i(TAG, " onLayoutChildren ")
-        //得到子view的宽和高，这边的item的宽高都是一样的，所以只需要进行一次测量
-        val scrap = recycler.getViewForPosition(0)
-        addView(scrap)
-        measureChildWithMargins(scrap, 0, 0)
-        //计算测量布局的宽高
-        mDecoratedChildWidth = getDecoratedMeasuredWidth(scrap)
-        mDecoratedChildHeight = getDecoratedMeasuredHeight(scrap)
-        mStartX = Math.round((horizontalSpace - mDecoratedChildWidth) * 1.0f / 2)
-        mStartY = Math.round((verticalSpace - mDecoratedChildHeight) * 1.0f / 2)
-        var offset = mStartX.toFloat()
-        /**只存[MAX_RECT_COUNT]个item具体位置 */
-        var i = 0
-        while (i < itemCount && i < MAX_RECT_COUNT) {
-            var frame = mAllItemFrames[i]
-            if (frame == null) {
-                frame = Rect()
-            }
-            frame[offset.roundToInt(), mStartY, Math.round(offset + mDecoratedChildWidth)] =
-                mStartY + mDecoratedChildHeight
-            mAllItemFrames.put(i, frame)
-            mHasAttachedItems.put(i, false)
-            offset = offset + intervalDistance //原始位置累加，否则越后面误差越大
-            i++
+        //跳过preLayout，preLayout主要用于支持动画
+        if(state.isPreLayout) {
+            return
         }
-        detachAndScrapAttachedViews(recycler) //在布局之前，将所有的子View先Detach掉，放入到Scrap缓存中
+        initParams()
+
         if ((mRecycle == null || mState == null) &&  //在为初始化前调用smoothScrollToPosition 或者 scrollToPosition,只会记录位置
             selectedPos != 0
         ) {                 //所以初始化时需要滚动到对应位置
-            mOffsetAll = calculateOffsetForPosition(selectedPos)
+            scrollOffsetAll = calculateOffsetForPosition(selectedPos)
             onSelectedCallBack()
         }
         layoutItems(recycler, state, SCROLL_TO_LEFT)
@@ -153,82 +172,60 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
         if (mAnimation?.isRunning == true) mAnimation?.cancel()
         var travel = dx
         if (!mIsLoop) { //非循环模式，限制滚动位置
-            if (dx + mOffsetAll < 0) {
-                travel = -mOffsetAll
-            } else if (dx + mOffsetAll > maxOffset) {
-                travel = (maxOffset - mOffsetAll).toInt()
+            if (dx + scrollOffsetAll < 0) {
+                travel = -scrollOffsetAll
+            } else if (dx + scrollOffsetAll > maxOffset) {
+                travel = (maxOffset - scrollOffsetAll).toInt()
             }
         }
-        Log.i(TAG, " scrollHorizontallyBy dx: $dx, offsetAll: $mOffsetAll ")
+        Log.i(TAG, " scrollHorizontallyBy dx: $dx, offsetAll: $scrollOffsetAll ")
 
-        mOffsetAll += travel //累计偏移量
+        scrollOffsetAll += travel //累计偏移量
         layoutItems(recycler, state, if (dx > 0) SCROLL_TO_LEFT else SCROLL_TO_RIGHT)
         return travel
     }
 
     /**
      * 布局Item
-     *
-     *
-     * 1，先清除已经超出屏幕的item
-     *
-     * 2，再绘制可以显示在屏幕里面的item
      */
     private fun layoutItems(
         recycler: RecyclerView.Recycler?,
         state: RecyclerView.State?, scrollDirection: Int
     ) {
-        if (state == null || state.isPreLayout) return
-        val displayFrame = Rect(mOffsetAll, 0, mOffsetAll + horizontalSpace, verticalSpace)
-        var position = 0
-        for (i in 0 until childCount) {
-            val child = getChildAt(i) ?: continue
-            position = if (child.tag != null) {
-                val tag = checkTag(child.tag)
-                tag?.pos?:0
-            } else {
-                getPosition(child)
-            }
-            val rect = getFrame(position)
-            if (!Rect.intersects(displayFrame, rect)) { //Item没有在显示区域，就说明需要回收
-                removeAndRecycleView(child, recycler!!) //回收滑出屏幕的View
-                mHasAttachedItems.delete(position)
-            } else { //Item还在显示区域内，更新滑动后Item的位置
-                layoutItem(child, rect) //更新Item位置
-                mHasAttachedItems.put(position, true)
-            }
+        if(!checkItemReady()) {
+            return
         }
-        if (position == 0) position = centerPosition
+        val topPosition = getScrollItemCount()
 
-        // 检查前后 20 个 item 是否需要绘制
-        var min = position - 20
-        var max = position + 20
-        if (!mIsLoop) {
-            if (min < 0) min = 0
-            if (max > itemCount) max = itemCount
+
+    }
+
+    /**
+     * 当前顶部的item的pos
+     */
+    private fun getCurrentPosition(): Int {
+        var pos = scrollOffsetAll / itemSpace
+        val more = scrollOffsetAll % itemSpace
+        if (abs(more) >= itemSpace * 0.5f) {
+            if (more >= 0) pos++ else pos--
         }
-        for (i in min until max) {
-            val rect = getFrame(i)
-            if (Rect.intersects(displayFrame, rect) &&
-                !mHasAttachedItems[i]
-            ) { //重新加载可见范围内的Item
-                // 循环滚动时，计算实际的 item 位置
-                var actualPos = i % itemCount
-                // 循环滚动时，位置可能是负值，需要将其转换为对应的 item 的值
-                if (actualPos < 0) actualPos = itemCount + actualPos
-                val scrap = recycler!!.getViewForPosition(actualPos)
-                checkTag(scrap.tag)
-                scrap.tag = TAG(i)
-                measureChildWithMargins(scrap, 0, 0)
-                if (scrollDirection == SCROLL_TO_RIGHT || mIsFlatFlow) { //item 向右滚动，新增的Item需要添加在最前面
-                    addView(scrap, 0)
-                } else { //item 向左滚动，新增的item要添加在最后面
-                    addView(scrap)
-                }
-                layoutItem(scrap, rect) //将这个Item布局出来
-                mHasAttachedItems.put(i, true)
-            }
+        return pos
+    }
+
+    /**
+     * 真实数据的索引
+     */
+    fun getRealItemPosition(): Int {
+        val position = getCurrentPosition()
+        var realPosition = position % itemTotalCount
+        if(realPosition < 0) {
+            realPosition += itemTotalCount
         }
+        return realPosition
+    }
+
+    private fun getScrollItemCount(): Float {
+        return scrollOffsetAll * 1.0f / itemSpace
     }
 
     /**
@@ -239,17 +236,17 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
     private fun layoutItem(child: View?, frame: Rect) {
         layoutDecorated(
             child!!,
-            frame.left - mOffsetAll,
+            frame.left - scrollOffsetAll,
             frame.top,
-            frame.right - mOffsetAll,
+            frame.right - scrollOffsetAll,
             frame.bottom
         )
         if (!mIsFlatFlow) { //不是平面普通滚动的情况下才进行缩放
-            child.scaleX = computeScale(frame.left - mOffsetAll) //缩放
-            child.scaleY = computeScale(frame.left - mOffsetAll) //缩放
+            child.scaleX = computeScale(frame.left - scrollOffsetAll) //缩放
+            child.scaleY = computeScale(frame.left - scrollOffsetAll) //缩放
         }
         if (mItemGradualAlpha) {
-            child.alpha = computeAlpha(frame.left - mOffsetAll)
+            child.alpha = computeAlpha(frame.left - scrollOffsetAll)
         }
         if (mItemGradualGrey) {
             greyItem(child, frame)
@@ -278,7 +275,7 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
      * @param frame 位置信息
      */
     private fun greyItem(child: View?, frame: Rect) {
-        val value = computeGreyScale(frame.left - mOffsetAll)
+        val value = computeGreyScale(frame.left - scrollOffsetAll)
         val cm = ColorMatrix(
             floatArrayOf(
                 value,
@@ -331,7 +328,7 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
 
     override fun scrollToPosition(position: Int) {
         if (position < 0 || position > itemCount - 1) return
-        mOffsetAll = calculateOffsetForPosition(position)
+        scrollOffsetAll = calculateOffsetForPosition(position)
         if (mRecycle == null || mState == null) { //如果RecyclerView还没初始化完，先记录下要滚动的位置
             selectedPos = position
         } else {
@@ -356,7 +353,7 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
         if (mRecycle == null || mState == null) { //如果RecyclerView还没初始化完，先记录下要滚动的位置
             selectedPos = position
         } else {
-            startScroll(mOffsetAll, finalOffset)
+            startScroll(scrollOffsetAll, finalOffset)
         }
     }
 
@@ -371,7 +368,7 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
         removeAllViews()
         mRecycle = null
         mState = null
-        mOffsetAll = 0
+        scrollOffsetAll = 0
         selectedPos = 0
         mLastSelectPosition = 0
         mHasAttachedItems.clear()
@@ -382,13 +379,13 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
      * 获取整个布局的水平空间大小
      */
     private val horizontalSpace: Int
-        private get() = width - paddingRight - paddingLeft
+        get() = width - paddingRight - paddingLeft
 
     /**
      * 获取整个布局的垂直空间大小
      */
     private val verticalSpace: Int
-        private get() = height - paddingBottom - paddingTop
+        get() = height - paddingBottom - paddingTop
 
     /**
      * 获取最大偏移量
@@ -450,13 +447,13 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
      */
     private fun fixOffsetWhenFinishScroll() {
         if (intervalDistance != 0) { // 判断非 0 ，否则除 0 会导致异常
-            var scrollN = (mOffsetAll * 1.0f / intervalDistance).toInt()
-            val moreDx = (mOffsetAll % intervalDistance).toFloat()
+            var scrollN = (scrollOffsetAll * 1.0f / intervalDistance).toInt()
+            val moreDx = (scrollOffsetAll % intervalDistance).toFloat()
             if (abs(moreDx) > intervalDistance * 0.5) {
                 if (moreDx > 0) scrollN++ else scrollN--
             }
             val finalOffset = scrollN * intervalDistance
-            startScroll(mOffsetAll, finalOffset)
+            startScroll(scrollOffsetAll, finalOffset)
             selectedPos = abs((finalOffset * 1.0f / intervalDistance).roundToInt()) % itemCount
         }
     }
@@ -476,7 +473,7 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
             duration = 500
             interpolator = DecelerateInterpolator()
             addUpdateListener(ValueAnimator.AnimatorUpdateListener { animation ->
-                mOffsetAll = (animation.animatedValue as Float).roundToInt()
+                scrollOffsetAll = (animation.animatedValue as Float).roundToInt()
                 layoutItems(mRecycle, mState, direction)
             })
             addListener(object : Animator.AnimatorListener {
@@ -502,7 +499,7 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
      * 计算当前选中位置，并回调
      */
     private fun onSelectedCallBack() {
-        selectedPos = (mOffsetAll / intervalDistance.toFloat()).roundToInt()
+        selectedPos = (scrollOffsetAll / intervalDistance.toFloat()).roundToInt()
         selectedPos = abs(selectedPos % itemCount)
         if (mSelectedListener != null && selectedPos != mLastSelectPosition) {
             mSelectedListener!!.onItemSelected(selectedPos)
@@ -529,7 +526,7 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
      */
     val firstVisiblePosition: Int
         get() {
-            val displayFrame = Rect(mOffsetAll, 0, mOffsetAll + horizontalSpace, verticalSpace)
+            val displayFrame = Rect(scrollOffsetAll, 0, scrollOffsetAll + horizontalSpace, verticalSpace)
             val cur = centerPosition
             var i = cur - 1
             while (true) {
@@ -548,7 +545,7 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
      */
     val lastVisiblePosition: Int
         get() {
-            val displayFrame = Rect(mOffsetAll, 0, mOffsetAll + horizontalSpace, verticalSpace)
+            val displayFrame = Rect(scrollOffsetAll, 0, scrollOffsetAll + horizontalSpace, verticalSpace)
             val cur = centerPosition
             var i = cur + 1
             while (true) {
@@ -593,8 +590,8 @@ class CoverFlowLayoutManager2 : RecyclerView.LayoutManager {
      */
     val centerPosition: Int
         get() {
-            var pos = mOffsetAll / intervalDistance
-            val more = mOffsetAll % intervalDistance
+            var pos = scrollOffsetAll / intervalDistance
+            val more = scrollOffsetAll % intervalDistance
             if (abs(more) >= intervalDistance * 0.5f) {
                 if (more >= 0) pos++ else pos--
             }

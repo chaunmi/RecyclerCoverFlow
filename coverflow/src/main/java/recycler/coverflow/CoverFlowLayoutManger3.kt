@@ -13,26 +13,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.Recycler
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-/**
- * Cover Flow布局类
- *
- * 通过重写LayoutManger布局方法[.onLayoutChildren]
- * 对Item进行布局，并对超出屏幕的Item进行回收
- *
- * 通过重写LayoutManger中的[.scrollHorizontallyBy]
- * 进行水平滚动处理
- *
- * @author Chen Xiaoping (562818444@qq.com)
- * @version V1.1：
- * 增加循环滚动功能
- *
- * @Datetime 2020-06-09
- */
-class CoverFlowLayoutManger private constructor(
+class CoverFlowLayoutManger3  private constructor(
     isFlat: Boolean, isGreyItem: Boolean,
     isAlphaItem: Boolean, cstInterval: Float,
     isLoop: Boolean, is3DItem: Boolean
@@ -47,7 +31,14 @@ class CoverFlowLayoutManger private constructor(
     private var mDecoratedChildHeight = 0
 
     /**Item间隔与item宽的比例 */
-    private var mIntervalRatio = 0.5f
+    private var mIntervalRatio: Float = 0.5f
+        get() {
+            return if(getItemWidth() >= 0) {
+                intervalDistance * 1.0f / getItemWidth()
+            }else {
+                0.5f
+            }
+        }
 
     /**起始ItemX坐标 */
     private var mStartX = 0
@@ -62,7 +53,7 @@ class CoverFlowLayoutManger private constructor(
     private val mHasAttachedItems = SparseBooleanArray()
 
     /**RecyclerView的Item回收器 */
-    private var mRecycle: Recycler? = null
+    private var mRecycle: RecyclerView.Recycler? = null
 
     /**RecyclerView的状态器 */
     private var mState: RecyclerView.State? = null
@@ -103,7 +94,15 @@ class CoverFlowLayoutManger private constructor(
         )
     }
 
-    override fun onLayoutChildren(recycler: Recycler, state: RecyclerView.State) {
+    fun getItemWidth(): Int {
+        return horizontalSpace - (MAX_COUNT - 1) * intervalDistance
+    }
+
+    fun getItemHeight(): Int {
+        return verticalSpace
+    }
+
+    override fun onLayoutChildren(recycler: RecyclerView.Recycler, state: RecyclerView.State) {
         //如果没有item，直接返回
         //跳过preLayout，preLayout主要用于支持动画
         if (itemCount <= 0 || state.isPreLayout) {
@@ -114,12 +113,14 @@ class CoverFlowLayoutManger private constructor(
         mHasAttachedItems.clear()
         //得到子view的宽和高，这边的item的宽高都是一样的，所以只需要进行一次测量
         val scrap = recycler.getViewForPosition(0)
-   //     addView(scrap)
+        //     addView(scrap)
         measureChildWithMargins(scrap, 0, 0)
 
         //计算测量布局的宽高
         mDecoratedChildWidth = getDecoratedMeasuredWidth(scrap)
         mDecoratedChildHeight = getDecoratedMeasuredHeight(scrap)
+
+
         mStartX = ((horizontalSpace - mDecoratedChildWidth) * 1.0f / 2).roundToInt()
         mStartY = ((verticalSpace - mDecoratedChildHeight) * 1.0f / 2).roundToInt()
         var offset = mStartX.toFloat()
@@ -149,7 +150,7 @@ class CoverFlowLayoutManger private constructor(
     }
 
     override fun scrollHorizontallyBy(
-        dx: Int, recycler: Recycler,
+        dx: Int, recycler: RecyclerView.Recycler,
         state: RecyclerView.State
     ): Int {
         // 手指从右向左滑动，dx > 0; 手指从左向右滑动，dx < 0;
@@ -178,7 +179,7 @@ class CoverFlowLayoutManger private constructor(
      * 2，再绘制可以显示在屏幕里面的item
      */
     private fun layoutItems(
-        recycler: Recycler?,
+        recycler: RecyclerView.Recycler?,
         state: RecyclerView.State?, scrollDirection: Int
     ) {
         if (state == null || state.isPreLayout) return
@@ -516,7 +517,7 @@ class CoverFlowLayoutManger private constructor(
      * 获取Item间隔
      */
     private val intervalDistance: Int
-        private get() = (mDecoratedChildWidth * mIntervalRatio).roundToInt()
+        private get() = 250
 
     /**
      * 计算当前选中位置，并回调
@@ -683,8 +684,8 @@ class CoverFlowLayoutManger private constructor(
             return this
         }
 
-        fun build(): CoverFlowLayoutManger {
-            return CoverFlowLayoutManger(
+        fun build(): CoverFlowLayoutManger3 {
+            return CoverFlowLayoutManger3(
                 isFlat, isGreyItem,
                 isAlphaItem, cstIntervalRatio, isLoop, is3DItem
             )
@@ -698,6 +699,7 @@ class CoverFlowLayoutManger private constructor(
         /**item 向左移动 */
         private const val SCROLL_TO_LEFT = 2
 
+        private const val MAX_COUNT = 5
         /**
          * 最大存储item信息存储数量，
          * 超过设置数量，则动态计算来获取

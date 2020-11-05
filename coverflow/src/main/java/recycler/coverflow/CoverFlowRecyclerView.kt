@@ -6,17 +6,10 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
-import recycler.coverflow.CoverFlowLayoutManger3.OnSelected
 import kotlin.math.abs
 
-/**
- * 继承RecyclerView重写[.getChildDrawingOrder]对Item的绘制顺序进行控制
- *
- * @author Chen Xiaoping (562818444@qq.com)
- * @version V1.0
- * @Datetime 2017-04-18
- */
-class RecyclerCoverFlow : RecyclerView {
+class CoverFlowRecyclerView : RecyclerView {
+
     /**
      * 按下的X轴坐标
      */
@@ -26,7 +19,7 @@ class RecyclerCoverFlow : RecyclerView {
     /**
      * 布局器构建者
      */
-    private var mManagerBuilder: CoverFlowLayoutManger3.Builder? = null
+    private var mManagerBuilder: CoverFlowLayoutManager2.Builder? = null
 
     constructor(context: Context?) : super(context!!) {
         init()
@@ -56,7 +49,7 @@ class RecyclerCoverFlow : RecyclerView {
      */
     private fun createManageBuilder() {
         if (mManagerBuilder == null) {
-            mManagerBuilder = CoverFlowLayoutManger3.Builder()
+            mManagerBuilder = CoverFlowLayoutManager2.Builder()
         }
     }
 
@@ -121,33 +114,15 @@ class RecyclerCoverFlow : RecyclerView {
     }
 
     override fun setLayoutManager(layout: LayoutManager?) {
-        require(layout is CoverFlowLayoutManger3) { "The layout manager must be CoverFlowLayoutManger3" }
+        require(layout is CoverFlowLayoutManger) { "The layout manager must be CoverFlowLayoutManger" }
         super.setLayoutManager(layout)
-    }
-
-    public override fun getChildDrawingOrder(childCount: Int, i: Int): Int {
-        val center = coverFlowLayout!!.centerPosition
-        // 获取 RecyclerView 中第 i 个 子 view 的实际位置
-        val actualPos = coverFlowLayout!!.getChildActualPos(i)
-
-        // 距离中间item的间隔数
-        val dist = actualPos - center
-        var order: Int
-        order = if (dist < 0) { // [< 0] 说明 item 位于中间 item 左边，按循序绘制即可
-            i
-        } else { // [>= 0] 说明 item 位于中间 item 右边，需要将顺序颠倒绘制
-            childCount - 1 - dist
-        }
-        Log.i(TAG, "center: $center, actualPos: $actualPos, childCount: $childCount, order: $order, index: $i")
-        if (order < 0) order = 0 else if (order > childCount - 1) order = childCount - 1
-        return order
     }
 
     /**
      * 获取LayoutManger，并强制转换为CoverFlowLayoutManger
      */
-    val coverFlowLayout: CoverFlowLayoutManger3?
-        get() = layoutManager as CoverFlowLayoutManger3?
+    val coverFlowLayout: CoverFlowLayoutManager2?
+        get() = layoutManager as CoverFlowLayoutManager2?
 
     /**
      * 获取被选中的Item位置
@@ -159,7 +134,7 @@ class RecyclerCoverFlow : RecyclerView {
      * 设置选中监听
      * @param l 监听接口
      */
-    fun setOnItemSelectedListener(l: OnSelected?) {
+    fun setOnItemSelectedListener(l: CoverFlowLayoutManager2.OnSelected?) {
         coverFlowLayout!!.setOnSelectedListener(l)
     }
 

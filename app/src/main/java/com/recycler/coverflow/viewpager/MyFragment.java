@@ -12,6 +12,7 @@ import com.recycler.coverflow.Adapter;
 import com.recycler.coverflow.R;
 
 import recycler.coverflow.CoverFlowLayoutManger;
+import recycler.coverflow.CoverFlowLayoutManger3;
 import recycler.coverflow.RecyclerCoverFlow;
 
 /**
@@ -47,7 +48,7 @@ public class MyFragment extends Fragment {
         mList.setGreyItem(true); //设置灰度渐变
 //        mList.setAlphaItem(true); //设置半透渐变
         mList.setAdapter(new Adapter(getActivity(), false));
-        mList.setOnItemSelectedListener(new CoverFlowLayoutManger.OnSelected() {
+        mList.setOnItemSelectedListener(new CoverFlowLayoutManger3.OnSelected() {
             @Override
             public void onItemSelected(int position) {
                 mIndex.setText((position+1)+"/"+mList.getLayoutManager().getItemCount());

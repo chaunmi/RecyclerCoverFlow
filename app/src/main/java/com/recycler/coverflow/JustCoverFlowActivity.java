@@ -9,6 +9,7 @@ import android.widget.TextView;
 import com.recycler.coverflow.viewpager.KotlinUtilsKt;
 
 import recycler.coverflow.CoverFlowLayoutManger;
+import recycler.coverflow.CoverFlowLayoutManger3;
 import recycler.coverflow.RecyclerCoverFlow;
 
 public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.onItemClick {
@@ -29,7 +30,8 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
 //        mList.setAlphaItem(true); //设置半透渐变
         mList.setLoop(); //循环滚动，注：循环滚动模式暂不支持平滑滚动
         mList.setAdapter(new Adapter(this, this, false));
-        mList.setOnItemSelectedListener(new CoverFlowLayoutManger.OnSelected() {
+//        mList.scrollToPosition(5);
+        mList.setOnItemSelectedListener(new CoverFlowLayoutManger3.OnSelected() {
             @Override
             public void onItemSelected(int position) {
                 ((TextView)findViewById(R.id.index)).setText((position+1)+"/"+mList.getLayoutManager().getItemCount());

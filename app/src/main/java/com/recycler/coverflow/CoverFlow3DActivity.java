@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.widget.TextView;
 
 import recycler.coverflow.CoverFlowLayoutManger;
+import recycler.coverflow.CoverFlowLayoutManger3;
 import recycler.coverflow.RecyclerCoverFlow;
 
 /**
@@ -31,7 +32,7 @@ public class CoverFlow3DActivity extends AppCompatActivity implements Adapter.on
         mList.set3DItem(true); //3D 滚动
         mList.setLoop(); //循环滚动
         mList.setAdapter(new Adapter(this, this, true));
-        mList.setOnItemSelectedListener(new CoverFlowLayoutManger.OnSelected() {
+        mList.setOnItemSelectedListener(new CoverFlowLayoutManger3.OnSelected() {
             @Override
             public void onItemSelected(int position) {
                 ((TextView)findViewById(R.id.index)).setText((position+1)+"/"+mList.getLayoutManager().getItemCount());

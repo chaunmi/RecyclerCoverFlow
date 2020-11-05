@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
@@ -46,12 +47,11 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
-        Glide.with(mContext).load(mColors[position]).into(holder.img);
-        holder.itemView.setTag(-1, position);
+        Glide.with(mContext).load(mColors[position]).placeholder(R.mipmap.default_load_icon_medium).into(holder.img);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Toast.makeText(mContext, "点击了："+position, Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext, "点击了："+position, Toast.LENGTH_SHORT).show();
                 if (clickCb != null) {
                     clickCb.clickItem(position);
                 }

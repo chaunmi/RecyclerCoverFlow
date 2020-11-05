@@ -10,6 +10,7 @@ import com.recycler.coverflow.Adapter;
 import com.recycler.coverflow.R;
 
 import recycler.coverflow.CoverFlowLayoutManger;
+import recycler.coverflow.CoverFlowLayoutManger3;
 import recycler.coverflow.RecyclerCoverFlow;
 
 public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
@@ -47,7 +48,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
     private void intiCoverFlow(final ViewHolder holder) {
         holder.coverFlow.setAdapter(new Adapter(holder.itemView.getContext(), false));
         holder.coverFlow.setLoop();
-        holder.coverFlow.setOnItemSelectedListener(new CoverFlowLayoutManger.OnSelected() {
+        holder.coverFlow.setOnItemSelectedListener(new CoverFlowLayoutManger3.OnSelected() {
             @Override
             public void onItemSelected(int position) {
                 mCoverFlowPosition = position;
