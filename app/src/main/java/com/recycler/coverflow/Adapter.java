@@ -16,7 +16,7 @@ import com.bumptech.glide.Glide;
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
     private Context mContext;
-    private int[] mColors = {R.mipmap.item1,R.mipmap.item2,R.mipmap.item3,R.mipmap.item4, R.mipmap.item5/*,R.mipmap.item6*/};
+    private int[] mColors = {R.mipmap.item1,R.mipmap.item2,R.mipmap.item3,R.mipmap.item4, R.mipmap.item5, R.mipmap.item6};
 
     private onItemClick clickCb;
     private boolean is3D;

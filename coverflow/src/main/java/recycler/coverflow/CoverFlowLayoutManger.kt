@@ -521,7 +521,11 @@ class CoverFlowLayoutManger private constructor(
      */
     private fun onSelectedCallBack() {
         selectedPos = (mOffsetAll / intervalDistance.toFloat()).roundToInt()
-        selectedPos = abs(selectedPos % itemCount)
+    //    selectedPos = abs(selectedPos % itemCount)
+        selectedPos %= itemCount
+        if(selectedPos < 0) {
+            selectedPos += itemCount
+        }
         if (mSelectedListener != null && selectedPos != mLastSelectPosition) {
             mSelectedListener!!.onItemSelected(selectedPos)
         }
