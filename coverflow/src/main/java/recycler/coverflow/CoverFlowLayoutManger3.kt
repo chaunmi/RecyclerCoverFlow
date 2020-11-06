@@ -125,27 +125,13 @@ class CoverFlowLayoutManger3  private constructor(
 
         Log.i(TAG, " onLayoutChildren, itemWidth: $mDecoratedChildWidth, startX: $mStartX ")
 
-        var offset = mStartX.toFloat()
-        /**只存[MAX_RECT_COUNT]个item具体位置 */
-        var i = 0
-        while (i < itemCount && i < MAX_RECT_COUNT) {
-            var frame = mAllItemFrames[i]
-            if (frame == null) {
-                frame = Rect()
-            }
-            frame.set(offset.roundToInt(), mStartY, (offset + mDecoratedChildWidth).roundToInt(), mStartY + mDecoratedChildHeight)
-            mAllItemFrames.put(i, frame)
-            mHasAttachedItems.put(i, false)
-            offset += intervalDistance //原始位置累加，否则越后面误差越大
-            i++
-        }
         detachAndScrapAttachedViews(recycler) //在布局之前，将所有的子View先Detach掉，放入到Scrap缓存中
         //首次时才需要回调
         if ((mRecycle == null || mState == null)) {  //在为初始化前调用smoothScrollToPosition 或者 scrollToPosition,只会记录位置
             mOffsetAll = calculateOffsetForPosition(selectedPos)          //所以初始化时需要滚动到对应位置
             onSelectedCallBack()
         }
-        layoutItems(recycler, state, SCROLL_TO_LEFT)
+        layoutItems2(recycler, state, SCROLL_TO_LEFT)
         mRecycle = recycler
         mState = state
     }
@@ -167,9 +153,41 @@ class CoverFlowLayoutManger3  private constructor(
         Log.i(TAG, " scrollHorizontallyBy dx: $dx, offsetAll: $mOffsetAll ")
 
         mOffsetAll += travel //累计偏移量
-        layoutItems(recycler, state, if (dx > 0) SCROLL_TO_LEFT else SCROLL_TO_RIGHT)
+        layoutItems2(recycler, state, if (dx > 0) SCROLL_TO_LEFT else SCROLL_TO_RIGHT)
         return travel
     }
+
+    private fun layoutItems2(recycler: RecyclerView.Recycler?, state: RecyclerView.State?, scrollDirection: Int) {
+
+        if (state == null || state.isPreLayout) return
+
+
+        val position = centerPosition
+
+        // 检查前后 20 个 item 是否需要绘制
+        var min = position - 10
+        var max = position + 10
+
+
+        for(i in min until max) {
+            val rect = getFrame(i)
+
+            var actualPos = i % itemCount
+            // 循环滚动时，位置可能是负值，需要将其转换为对应的 item 的值
+            if (actualPos < 0) actualPos += itemCount
+            val scrap = recycler!!.getViewForPosition(actualPos)
+            checkTag(scrap.tag)
+            scrap.tag = TAG(i)
+            measureChildWithMargins(scrap, 0, 0)
+            if (scrollDirection == SCROLL_TO_RIGHT || mIsFlatFlow) { //item 向右滚动，新增的Item需要添加在最前面
+                addView(scrap, 0)
+            } else { //item 向左滚动，新增的item要添加在最后面
+                addView(scrap)
+            }
+            layoutItem(scrap, rect) //将这个Item布局出来
+        }
+    }
+
 
     /**
      * 布局Item
@@ -184,6 +202,7 @@ class CoverFlowLayoutManger3  private constructor(
         state: RecyclerView.State?, scrollDirection: Int
     ) {
         if (state == null || state.isPreLayout) return
+
         val displayFrame = Rect(mOffsetAll, 0, mOffsetAll + horizontalSpace, verticalSpace)
         var position = 0
         Log.i(TAG, " layoutItems , offsetAll: $mOffsetAll, childCount: $childCount, " +
@@ -214,6 +233,7 @@ class CoverFlowLayoutManger3  private constructor(
         // 检查前后 20 个 item 是否需要绘制
         var min = position - 10
         var max = position + 10
+
         if (!mIsLoop) {
             if (min < 0) min = 0
             if (max > itemCount) max = itemCount
@@ -376,7 +396,7 @@ class CoverFlowLayoutManger3  private constructor(
         if (mRecycle == null || mState == null) { //如果RecyclerView还没初始化完，先记录下要滚动的位置
             selectedPos = position
         } else {
-            layoutItems(
+            layoutItems2(
                 mRecycle,
                 mState,
                 if (position > selectedPos) SCROLL_TO_LEFT else SCROLL_TO_RIGHT
@@ -527,7 +547,7 @@ class CoverFlowLayoutManger3  private constructor(
             interpolator = DecelerateInterpolator()
             addUpdateListener(ValueAnimator.AnimatorUpdateListener { animation ->
                 mOffsetAll = (animation.animatedValue as Float).roundToInt()
-                layoutItems(mRecycle, mState, direction)
+                layoutItems2(mRecycle, mState, direction)
             })
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator) {}

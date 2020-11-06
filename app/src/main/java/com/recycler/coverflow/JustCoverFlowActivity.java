@@ -2,6 +2,7 @@ package com.recycler.coverflow;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.PagerSnapHelper;
 
 import android.util.Log;
 import android.view.View;
