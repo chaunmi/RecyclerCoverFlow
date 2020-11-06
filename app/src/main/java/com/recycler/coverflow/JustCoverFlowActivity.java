@@ -44,7 +44,8 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
                     CoverFlowLayoutManger3.TAG tag = (CoverFlowLayoutManger3.TAG)(view.getTag());
                     tagPos = tag.getPos();
                 }
-                Log.i(KotlinUtilsKt.TAG, " itemCount: " + mList.getLayoutManager().getItemCount() + ", position: " + position + ", tagPos: " + tagPos);
+                Log.i(KotlinUtilsKt.TAG, " itemCount: " + mList.getLayoutManager().getItemCount() +
+                        ", position: " + position + ", tagPos: " + tagPos);
             }
         });
     }

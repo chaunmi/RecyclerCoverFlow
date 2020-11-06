@@ -13,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import androidx.recyclerview.widget.RecyclerView
+import recycler.stacklayout.StackSnapHelper
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -40,6 +41,8 @@ class CoverFlowLayoutManger3  private constructor(
 //            }
             return 0.8f
         }
+
+    private var snapHelper: CoverFlowSnapHelper? = null
 
     /**起始ItemX坐标 */
     private var mStartX = 0
@@ -510,7 +513,7 @@ class CoverFlowLayoutManger3  private constructor(
      * 计算Item所在的位置偏移
      * @param position 要计算Item位置
      */
-    private fun calculateOffsetForPosition(position: Int): Int {
+     fun calculateOffsetForPosition(position: Int): Int {
         return (intervalDistance * position.toFloat()).roundToInt()
     }
 
@@ -527,6 +530,21 @@ class CoverFlowLayoutManger3  private constructor(
             val finalOffset = scrollN * intervalDistance
             startScroll(mOffsetAll, finalOffset)
             selectedPos = abs((finalOffset * 1.0f / intervalDistance).roundToInt()) % itemCount
+        }
+    }
+
+
+    fun getFixedScrollPosition(): Int {
+        if (intervalDistance != 0) { // 判断非 0 ，否则除 0 会导致异常
+            var scrollN = (mOffsetAll * 1.0f / intervalDistance).toInt()
+            val moreDx = (mOffsetAll % intervalDistance).toFloat()
+            if (abs(moreDx) > intervalDistance * 0.5) {
+                if (moreDx > 0) scrollN++ else scrollN--
+            }
+            val finalOffset = scrollN * intervalDistance
+            return abs((finalOffset * 1.0f / intervalDistance).roundToInt()) % itemCount
+        }else {
+            return RecyclerView.NO_POSITION
         }
     }
 
@@ -581,6 +599,7 @@ class CoverFlowLayoutManger3  private constructor(
         }
         if (mSelectedListener != null && (selectedPos == 0 || selectedPos != mLastSelectPosition)) {
             mSelectedListener!!.onItemSelected(selectedPos)
+            Log.i(TAG, " onSelectedCallBack, selectedPos: $selectedPos, firstPos: $firstVisiblePosition, lastPost: $lastVisiblePosition ")
         }
         mLastSelectPosition = selectedPos
     }
@@ -610,7 +629,12 @@ class CoverFlowLayoutManger3  private constructor(
             while (true) {
                 val rect = getFrame(i)
                 if (rect.left <= displayFrame.left) {
-                    return abs(i) % itemCount
+                //    return abs(i) % itemCount
+                    var realPos = i % itemCount
+                    if(realPos < 0) {
+                        realPos += itemCount
+                    }
+                    return realPos
                 }
                 i--
             }
@@ -684,6 +708,12 @@ class CoverFlowLayoutManger3  private constructor(
      */
     fun setOnSelectedListener(l: OnSelected?) {
         mSelectedListener = l
+    }
+
+    override fun onAttachedToWindow(view: RecyclerView?) {
+        super.onAttachedToWindow(view)
+        view?.onFlingListener = null
+    //    snapHelper?.attachToRecyclerView(view)
     }
 
     /**
@@ -772,6 +802,7 @@ class CoverFlowLayoutManger3  private constructor(
                 mIntervalRatio = 1.1f
             }
         }
+        snapHelper = CoverFlowSnapHelper()
     }
 
 }
