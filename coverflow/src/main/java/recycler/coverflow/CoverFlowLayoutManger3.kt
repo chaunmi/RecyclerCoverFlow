@@ -111,18 +111,19 @@ class CoverFlowLayoutManger3  private constructor(
         }
         mAllItemFrames.clear()
         mHasAttachedItems.clear()
-        //得到子view的宽和高，这边的item的宽高都是一样的，所以只需要进行一次测量
-    //    val scrap = recycler.getViewForPosition(0)
-    //         addView(scrap)
-    //    measureChildWithMargins(scrap, 0, 0)
-
         //计算测量布局的宽高
-        mDecoratedChildWidth = getItemWidth() //getDecoratedMeasuredWidth(scrap)
-        mDecoratedChildHeight = getItemHeight()  //getDecoratedMeasuredHeight(scrap)
+        mDecoratedChildWidth = getItemWidth()
+        mDecoratedChildHeight = getItemHeight()
 
+        if(mDecoratedChildWidth <= 0) {
+            return
+        }
 
-        mStartX = ((horizontalSpace - mDecoratedChildWidth) * 1.0f / 2).roundToInt()
-        mStartY = ((verticalSpace - mDecoratedChildHeight) * 1.0f / 2).roundToInt()
+        mStartX = (MAX_COUNT / 2) * intervalDistance  //最中间那个为起始item
+        mStartY = 0
+
+        Log.i(TAG, " onLayoutChildren, itemWidth: $mDecoratedChildWidth, startX: $mStartX ")
+
         var offset = mStartX.toFloat()
         /**只存[MAX_RECT_COUNT]个item具体位置 */
         var i = 0
@@ -138,7 +139,8 @@ class CoverFlowLayoutManger3  private constructor(
             i++
         }
         detachAndScrapAttachedViews(recycler) //在布局之前，将所有的子View先Detach掉，放入到Scrap缓存中
-        if ((mRecycle == null || mState == null)) {      //在为初始化前调用smoothScrollToPosition 或者 scrollToPosition,只会记录位置
+        //首次时才需要回调
+        if ((mRecycle == null || mState == null)) {  //在为初始化前调用smoothScrollToPosition 或者 scrollToPosition,只会记录位置
             mOffsetAll = calculateOffsetForPosition(selectedPos)          //所以初始化时需要滚动到对应位置
             onSelectedCallBack()
         }
@@ -182,10 +184,9 @@ class CoverFlowLayoutManger3  private constructor(
     ) {
         if (state == null || state.isPreLayout) return
         val displayFrame = Rect(mOffsetAll, 0, mOffsetAll + horizontalSpace, verticalSpace)
-        val count = if(mDecoratedChildWidth != 0) (mOffsetAll * 1.0/mDecoratedChildWidth) else 0.0
         var position = 0
-        Log.i(CoverFlowLayoutManager2.TAG, " layoutItems , offsetAll: $mOffsetAll, childCount: $childCount, " +
-                "displayFrame: $displayFrame , width: ${displayFrame.width()}, ChildWidth: $mDecoratedChildWidth, count: $count")
+        Log.i(TAG, " layoutItems , offsetAll: $mOffsetAll, childCount: $childCount, " +
+                "displayFrame: $displayFrame , width: ${displayFrame.width()}, ChildWidth: $mDecoratedChildWidth")
 
         for (i in 0 until childCount) {
             val child = getChildAt(i) ?: continue
@@ -199,16 +200,19 @@ class CoverFlowLayoutManger3  private constructor(
             if (!Rect.intersects(displayFrame, rect)) { //Item没有在显示区域，就说明需要回收
                 removeAndRecycleView(child, recycler!!) //回收滑出屏幕的View
                 mHasAttachedItems.delete(position)
+                Log.i(TAG, " layoutItems, removeAndRecycleView, position: $position, rect: $rect ")
             } else { //Item还在显示区域内，更新滑动后Item的位置
                 layoutItem(child, rect) //更新Item位置
+                Log.i(TAG, " layoutItem, position: $position, rect: $rect, updateLayout ")
                 mHasAttachedItems.put(position, true)
             }
         }
-        if (position == 0) position = centerPosition
+
+        position = centerPosition
 
         // 检查前后 20 个 item 是否需要绘制
-        var min = position - 20
-        var max = position + 20
+        var min = position - 10
+        var max = position + 10
         if (!mIsLoop) {
             if (min < 0) min = 0
             if (max > itemCount) max = itemCount
@@ -232,6 +236,7 @@ class CoverFlowLayoutManger3  private constructor(
                     addView(scrap)
                 }
                 layoutItem(scrap, rect) //将这个Item布局出来
+                Log.i(TAG, " layoutItem, rect: $rect, addView ")
                 mHasAttachedItems.put(i, true)
             }
         }
@@ -243,25 +248,42 @@ class CoverFlowLayoutManger3  private constructor(
      * @param frame 位置信息
      */
     private fun layoutItem(child: View?, frame: Rect) {
-        layoutDecorated(
-            child!!,
-            frame.left - mOffsetAll,
-            frame.top,
-            frame.right - mOffsetAll,
-            frame.bottom
-        )
-        if (!mIsFlatFlow) { //不是平面普通滚动的情况下才进行缩放
-            child.scaleX = computeScale(frame.left - mOffsetAll) //缩放
-            child.scaleY = computeScale(frame.left - mOffsetAll) //缩放
-        }
-        if (mItemGradualAlpha) {
-            child.alpha = computeAlpha(frame.left - mOffsetAll)
-        }
-        if (mItemGradualGrey) {
-            greyItem(child, frame)
-        }
-        if (mItem3D) {
-            item3D(child, frame)
+        child?.apply {
+            val scaleXY = computeScale(frame.left - mOffsetAll)
+            val scaledWidth = frame.width() * scaleXY
+            val scaleWidth = frame.width() - scaledWidth
+            var left = frame.left - mOffsetAll
+
+            val scaledHeight = frame.height() * scaleXY
+            val scaleHeight = frame.height() - scaledHeight
+            if(left >= mStartX) {
+                left += (scaleWidth/2).toInt()
+            }else {
+                left -= (scaleWidth/2).toInt()
+            }
+
+            val top = frame.top + (scaleHeight/2).toInt()
+            layoutDecorated(
+                this,
+                left,
+                top,
+                left + frame.width(),
+                top + frame.height()
+            )
+
+            if (!mIsFlatFlow) { //不是平面普通滚动的情况下才进行缩放
+                scaleX = scaleXY //缩放
+                scaleY = scaleXY //缩放
+            }
+            if (mItemGradualAlpha) {
+                alpha = computeAlpha(frame.left - mOffsetAll)
+            }
+            if (mItemGradualGrey) {
+                greyItem(this, frame)
+            }
+            if (mItem3D) {
+                item3D(this, frame)
+            }
         }
     }
 
@@ -416,12 +438,15 @@ class CoverFlowLayoutManger3  private constructor(
 
     /**
      * 计算Item缩放系数
-     * @param x Item的偏移量
+     * @param x Item与最中间view的偏移量
      * @return 缩放系数
      */
     private fun computeScale(x: Int): Float {
         var scale =
-            1 - Math.abs(x - mStartX) * 1.0f / Math.abs(mStartX + mDecoratedChildWidth / mIntervalRatio)
+            1 - abs(x - mStartX) * 1.0f / abs(mStartX + mDecoratedChildWidth / mIntervalRatio)
+
+
+
         if (scale < 0) scale = 0f
         if (scale > 1) scale = 1f
         return scale
@@ -644,7 +669,7 @@ class CoverFlowLayoutManger3  private constructor(
         fun onItemSelected(position: Int)
     }
 
-    private inner class TAG internal constructor(var pos: Int)
+    inner class TAG internal constructor(var pos: Int)
     internal class Builder {
         var isFlat = false
         var isGreyItem = false
