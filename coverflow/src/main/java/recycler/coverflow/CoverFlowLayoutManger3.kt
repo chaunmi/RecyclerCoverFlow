@@ -131,7 +131,7 @@ class CoverFlowLayoutManger3  private constructor(
             mOffsetAll = calculateOffsetForPosition(selectedPos)          //所以初始化时需要滚动到对应位置
             onSelectedCallBack()
         }
-        layoutItems2(recycler, state, SCROLL_TO_LEFT)
+        layoutItems(recycler, state, SCROLL_TO_LEFT)
         mRecycle = recycler
         mState = state
     }
@@ -153,7 +153,7 @@ class CoverFlowLayoutManger3  private constructor(
         Log.i(TAG, " scrollHorizontallyBy dx: $dx, offsetAll: $mOffsetAll ")
 
         mOffsetAll += travel //累计偏移量
-        layoutItems2(recycler, state, if (dx > 0) SCROLL_TO_LEFT else SCROLL_TO_RIGHT)
+        layoutItems(recycler, state, if (dx > 0) SCROLL_TO_LEFT else SCROLL_TO_RIGHT)
         return travel
     }
 
@@ -396,7 +396,7 @@ class CoverFlowLayoutManger3  private constructor(
         if (mRecycle == null || mState == null) { //如果RecyclerView还没初始化完，先记录下要滚动的位置
             selectedPos = position
         } else {
-            layoutItems2(
+            layoutItems(
                 mRecycle,
                 mState,
                 if (position > selectedPos) SCROLL_TO_LEFT else SCROLL_TO_RIGHT
@@ -547,7 +547,7 @@ class CoverFlowLayoutManger3  private constructor(
             interpolator = DecelerateInterpolator()
             addUpdateListener(ValueAnimator.AnimatorUpdateListener { animation ->
                 mOffsetAll = (animation.animatedValue as Float).roundToInt()
-                layoutItems2(mRecycle, mState, direction)
+                layoutItems(mRecycle, mState, direction)
             })
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator) {}
