@@ -33,11 +33,12 @@ class CoverFlowLayoutManger3  private constructor(
     /**Item间隔与item宽的比例 */
     private var mIntervalRatio: Float = 0.5f
         get() {
-            return if(getItemWidth() >= 0) {
-                intervalDistance * 1.0f / getItemWidth()
-            }else {
-                0.5f
-            }
+//            return if(getItemWidth() >= 0) {
+//                intervalDistance * 1.0f / getItemWidth()
+//            }else {
+//                0.5f
+//            }
+            return 0.8f
         }
 
     /**起始ItemX坐标 */
@@ -438,17 +439,19 @@ class CoverFlowLayoutManger3  private constructor(
 
     /**
      * 计算Item缩放系数
-     * @param x Item与最中间view的偏移量
+     * @param x Item的x坐标
      * @return 缩放系数
      */
     private fun computeScale(x: Int): Float {
-        var scale =
-            1 - abs(x - mStartX) * 1.0f / abs(mStartX + mDecoratedChildWidth / mIntervalRatio)
+//        var scale =
+//            1 - abs(x - mStartX) * 1.0f / abs(mStartX + mDecoratedChildWidth / mIntervalRatio)
+//
+//        if (scale < 0) scale = 0f
+//        if (scale > 1) scale = 1f
 
+        val scaledHeight = (abs(x - mStartX)* 1.0f / intervalDistance) * intervalHeightDistance
+        val scale =  (getItemHeight() - scaledHeight) / getItemHeight()
 
-
-        if (scale < 0) scale = 0f
-        if (scale > 1) scale = 1f
         return scale
     }
 
@@ -475,7 +478,10 @@ class CoverFlowLayoutManger3  private constructor(
     private fun computeAlpha(x: Int): Float {
         var alpha =
             1 - Math.abs(x - mStartX) * 1.0f / Math.abs(mStartX + mDecoratedChildWidth / mIntervalRatio)
-        if (alpha < 0.3f) alpha = 0.3f
+
+        alpha = computeScale(x)
+        alpha = alpha*alpha
+        if (alpha < 0.1f) alpha = 0.1f
         if (alpha > 1) alpha = 1.0f
         return alpha
     }
@@ -541,6 +547,8 @@ class CoverFlowLayoutManger3  private constructor(
      */
     private val intervalDistance: Int
         private get() = 150
+
+    private val intervalHeightDistance: Int = 75
 
     /**
      * 计算当前选中位置，并回调
