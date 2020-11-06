@@ -10,7 +10,8 @@
         android:layout_height="wrap_content"
         android:textAlignment="center"
         android:text="0"
-        android:textColor="@android:color/black"/>
+        android:textColor="@android:color/black"
+        android:gravity="center_horizontal" />
 
     <recycler.coverflow.RecyclerCoverFlow
         android:id="@+id/cover_flow"

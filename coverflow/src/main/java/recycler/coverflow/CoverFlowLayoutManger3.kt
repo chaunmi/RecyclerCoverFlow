@@ -94,11 +94,11 @@ class CoverFlowLayoutManger3  private constructor(
         )
     }
 
-    fun getItemWidth(): Int {
+    private fun getItemWidth(): Int {
         return horizontalSpace - (MAX_COUNT - 1) * intervalDistance
     }
 
-    fun getItemHeight(): Int {
+    private fun getItemHeight(): Int {
         return verticalSpace
     }
 
@@ -112,13 +112,13 @@ class CoverFlowLayoutManger3  private constructor(
         mAllItemFrames.clear()
         mHasAttachedItems.clear()
         //得到子view的宽和高，这边的item的宽高都是一样的，所以只需要进行一次测量
-        val scrap = recycler.getViewForPosition(0)
-        //     addView(scrap)
-        measureChildWithMargins(scrap, 0, 0)
+    //    val scrap = recycler.getViewForPosition(0)
+    //         addView(scrap)
+    //    measureChildWithMargins(scrap, 0, 0)
 
         //计算测量布局的宽高
-        mDecoratedChildWidth = getDecoratedMeasuredWidth(scrap)
-        mDecoratedChildHeight = getDecoratedMeasuredHeight(scrap)
+        mDecoratedChildWidth = getItemWidth() //getDecoratedMeasuredWidth(scrap)
+        mDecoratedChildHeight = getItemHeight()  //getDecoratedMeasuredHeight(scrap)
 
 
         mStartX = ((horizontalSpace - mDecoratedChildWidth) * 1.0f / 2).roundToInt()
@@ -138,10 +138,8 @@ class CoverFlowLayoutManger3  private constructor(
             i++
         }
         detachAndScrapAttachedViews(recycler) //在布局之前，将所有的子View先Detach掉，放入到Scrap缓存中
-        if ((mRecycle == null || mState == null) &&  //在为初始化前调用smoothScrollToPosition 或者 scrollToPosition,只会记录位置
-            selectedPos != 0
-        ) {                 //所以初始化时需要滚动到对应位置
-            mOffsetAll = calculateOffsetForPosition(selectedPos)
+        if ((mRecycle == null || mState == null)) {      //在为初始化前调用smoothScrollToPosition 或者 scrollToPosition,只会记录位置
+            mOffsetAll = calculateOffsetForPosition(selectedPos)          //所以初始化时需要滚动到对应位置
             onSelectedCallBack()
         }
         layoutItems(recycler, state, SCROLL_TO_LEFT)
@@ -517,7 +515,7 @@ class CoverFlowLayoutManger3  private constructor(
      * 获取Item间隔
      */
     private val intervalDistance: Int
-        private get() = 250
+        private get() = 150
 
     /**
      * 计算当前选中位置，并回调
@@ -528,7 +526,7 @@ class CoverFlowLayoutManger3  private constructor(
         if(selectedPos < 0) {
             selectedPos += itemCount
         }
-        if (mSelectedListener != null && selectedPos != mLastSelectPosition) {
+        if (mSelectedListener != null && (selectedPos == 0 || selectedPos != mLastSelectPosition)) {
             mSelectedListener!!.onItemSelected(selectedPos)
         }
         mLastSelectPosition = selectedPos
