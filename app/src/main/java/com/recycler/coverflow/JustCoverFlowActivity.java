@@ -2,7 +2,9 @@ package com.recycler.coverflow;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
 import android.view.View;
@@ -25,6 +27,7 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
         initList();
     }
 
+
     private void initList() {
         mList = findViewById(R.id.list);
 //        mList.setFlatFlow(true); //平面滚动
@@ -33,7 +36,22 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
 
         mList.setLoop(); //循环滚动，注：循环滚动模式暂不支持平滑滚动
         mList.setAdapter(new Adapter(this, this, false));
+//        mList.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
+//        new PagerSnapHelper().attachToRecyclerView(mList);
 //        mList.scrollToPosition(5);
+
+        //参考：https://blog.csdn.net/chunqiuwei/article/details/103187199
+        //参考：https://blog.csdn.net/chunqiuwei/article/details/103257452
+        mList.setOnFlingListener(new RecyclerView.OnFlingListener() {
+            @Override
+            public boolean onFling(int velocityX, int velocityY) {
+                RecyclerView.LayoutManager layoutManager = mList.getLayoutManager();
+                if(layoutManager != null && layoutManager instanceof CoverFlowLayoutManger3) {
+                    ((CoverFlowLayoutManger3) layoutManager).fixOffsetWhenFinishScroll();
+                }
+                return true;
+            }
+        });
         mList.setOnItemSelectedListener(new CoverFlowLayoutManger3.OnSelected() {
             @Override
             public void onItemSelected(int position) {

@@ -2,6 +2,7 @@ package recycler.coverflow
 
 import android.util.Log
 import android.view.View
+import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SnapHelper
 import recycler.stacklayout.StackLayoutManager

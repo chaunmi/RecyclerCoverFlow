@@ -2,10 +2,7 @@ package recycler.coverflow
 
 import android.animation.Animator
 import android.animation.ValueAnimator
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
-import android.graphics.Paint
-import android.graphics.Rect
+import android.graphics.*
 import android.util.Log
 import android.util.SparseArray
 import android.util.SparseBooleanArray
@@ -21,7 +18,7 @@ class CoverFlowLayoutManger3  private constructor(
     isFlat: Boolean, isGreyItem: Boolean,
     isAlphaItem: Boolean, cstInterval: Float,
     isLoop: Boolean, is3DItem: Boolean
-) : RecyclerView.LayoutManager() {
+) : RecyclerView.LayoutManager()/*,RecyclerView.SmoothScroller.ScrollVectorProvider*/ {
     /**滑动总偏移量 */
     private var mOffsetAll = 0
 
@@ -105,6 +102,25 @@ class CoverFlowLayoutManger3  private constructor(
     private fun getItemHeight(): Int {
         return verticalSpace
     }
+
+//    override fun computeScrollVectorForPosition(targetPosition: Int): PointF? {
+//        if (childCount == 0) {
+//            return null
+//        }
+//        val firstChildPos = getPosition(getChildAt(0)!!)
+//        val distancePos = targetPosition - firstChildPos
+//        val direction = if (targetPosition < firstChildPos) {
+//            // start
+//            if (itemCount > 2 * abs(distancePos)) -1 else 1
+//        } else {
+//            // end
+//            if (itemCount > 2 * abs(distancePos)) -1 else 1
+//        }
+//        return PointF(direction.toFloat(), 0f)
+//    //    val direction = if (targetPosition < firstChildPos) -1 else 1
+//    //    return PointF(direction.toFloat(), 0f)
+//
+//    }
 
     override fun onLayoutChildren(recycler: RecyclerView.Recycler, state: RecyclerView.State) {
         //如果没有item，直接返回
@@ -384,8 +400,9 @@ class CoverFlowLayoutManger3  private constructor(
     override fun onScrollStateChanged(state: Int) {
         super.onScrollStateChanged(state)
         when (state) {
-            RecyclerView.SCROLL_STATE_IDLE ->                 //滚动停止时
-                fixOffsetWhenFinishScroll()
+            RecyclerView.SCROLL_STATE_IDLE -> {
+               fixOffsetWhenFinishScroll()  //滚动停止时
+            }
             RecyclerView.SCROLL_STATE_DRAGGING -> {
             }
             RecyclerView.SCROLL_STATE_SETTLING -> {
@@ -520,7 +537,7 @@ class CoverFlowLayoutManger3  private constructor(
     /**
      * 修正停止滚动后，Item滚动到中间位置
      */
-    private fun fixOffsetWhenFinishScroll() {
+     fun fixOffsetWhenFinishScroll() {
         if (intervalDistance != 0) { // 判断非 0 ，否则除 0 会导致异常
             var scrollN = (mOffsetAll * 1.0f / intervalDistance).toInt()
             val moreDx = (mOffsetAll % intervalDistance).toFloat()
@@ -529,7 +546,7 @@ class CoverFlowLayoutManger3  private constructor(
             }
             val finalOffset = scrollN * intervalDistance
             startScroll(mOffsetAll, finalOffset)
-            selectedPos = abs((finalOffset * 1.0f / intervalDistance).roundToInt()) % itemCount
+        //    selectedPos = abs((finalOffset * 1.0f / intervalDistance).roundToInt()) % itemCount
         }
     }
 
@@ -541,8 +558,7 @@ class CoverFlowLayoutManger3  private constructor(
             if (abs(moreDx) > intervalDistance * 0.5) {
                 if (moreDx > 0) scrollN++ else scrollN--
             }
-            val finalOffset = scrollN * intervalDistance
-            return abs((finalOffset * 1.0f / intervalDistance).roundToInt()) % itemCount
+            return scrollN
         }else {
             return RecyclerView.NO_POSITION
         }
@@ -660,9 +676,9 @@ class CoverFlowLayoutManger3  private constructor(
         }
 
     /**
-     * 该方法主要用于[RecyclerCoverFlow.getChildDrawingOrder]判断中间位置
+     * 该方法主要用于[RecyclerCoverFlow.getChildDrawingOrder]判断中间位置，主要是获取相对centerPosition的位置
      * @param index child 在 RecyclerCoverFlow 中的位置
-     * @return child 的实际位置，如果 [.mIsLoop] 为 true ，返回结果可能为负值
+     * @return child 的实际位置，如果 [.mIsLoop] 为 true ，返回结果可能为负值， 初始时centerPosition为0，则靠近center的依次为-1，-2，-3，右边为1，2，3，如果有滑动会依次累加
      */
     fun getChildActualPos(index: Int): Int {
         val child = getChildAt(index)
@@ -712,7 +728,7 @@ class CoverFlowLayoutManger3  private constructor(
 
     override fun onAttachedToWindow(view: RecyclerView?) {
         super.onAttachedToWindow(view)
-        view?.onFlingListener = null
+    //    view?.onFlingListener = null
     //    snapHelper?.attachToRecyclerView(view)
     }
 
