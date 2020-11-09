@@ -270,47 +270,26 @@ class CoverFlowLayoutManger3(
             if (max > itemCount) max = itemCount
         }
 
-        for(i in min until position) {
-            addLayoutView(i, displayFrame, recycler)
-        }
-
-        for (i in max downTo  position + 1) {
-            Log.i(TAG, " downTo test i: $i ")
-            addLayoutView(i, displayFrame, recycler)
-        }
-
-        addLayoutView(position, displayFrame, recycler)
+//        for(i in min until position) {
+//            addLayoutView(i, displayFrame, recycler)
+//        }
+//
+//        for (i in max downTo  position + 1) {
+//            Log.i(TAG, " downTo test i: $i ")
+//            addLayoutView(i, displayFrame, recycler)
+//        }
+//
+//        addLayoutView(position, displayFrame, recycler)
 
         for (i in min until max) {
-//            val rect = getFrame(i)
-//            if (Rect.intersects(displayFrame, rect) &&
-//                !mHasAttachedItems[i]
-//            ) { //重新加载可见范围内的Item
-//                // 循环滚动时，计算实际的 item 位置
-//                var actualPos = i % itemCount
-//                // 循环滚动时，位置可能是负值，需要将其转换为对应的 item 的值
-//                if (actualPos < 0) actualPos += itemCount
-//                val scrap = recycler!!.getViewForPosition(actualPos)
-//                checkTag(scrap.tag)
-//                scrap.tag = TAG(i)
-//                measureChildWithMargins(scrap, 0, 0)
-//                if (scrollDirection == SCROLL_TO_RIGHT || mIsFlatFlow) { //item 向右滚动，新增的Item需要添加在最前面
-//                    addView(scrap, 0)
-//                } else { //item 向左滚动，新增的item要添加在最后面
-//                    addView(scrap)
-//                }
-//                layoutItem(scrap, rect) //将这个Item布局出来
-//                mActualPosition2AdapterPosition.put(i, actualPos)
-//                Log.i(TAG, " layoutItem, rect: $rect, addView , i: $i, actualPos: $actualPos")
-//                mHasAttachedItems.put(i, true)
-//            }
+            addLayoutView(i, displayFrame, recycler, scrollDirection)
         }
         if(scrollState != RecyclerView.SCROLL_STATE_IDLE) {
             mSelectedListener?.onItemScrolled()
         }
     }
 
-    private fun addLayoutView(i: Int, displayFrame: Rect,   recycler: RecyclerView.Recycler?) {
+    private fun addLayoutView(i: Int, displayFrame: Rect,   recycler: RecyclerView.Recycler?, scrollDirection: Int) {
         val rect = getFrame(i)
         if (Rect.intersects(displayFrame, rect) &&
             !mHasAttachedItems[i]
@@ -323,7 +302,11 @@ class CoverFlowLayoutManger3(
             checkTag(scrap.tag)
             scrap.tag = TAG(i)
             measureChildWithMargins(scrap, 0, 0)
-            addView(scrap)
+            if (scrollDirection == SCROLL_TO_RIGHT || mIsFlatFlow) { //item 向右滚动，新增的Item需要添加在最前面
+                addView(scrap, 0)
+            } else { //item 向左滚动，新增的item要添加在最后面
+                addView(scrap)
+            }
             layoutItem(scrap, rect) //将这个Item布局出来
             mActualPosition2AdapterPosition.put(i, actualPos)
             Log.i(TAG, " layoutItem, rect: $rect, addView , i: $i, actualPos: $actualPos")

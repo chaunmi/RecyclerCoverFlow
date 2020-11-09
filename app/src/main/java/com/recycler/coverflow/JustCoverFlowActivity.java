@@ -60,7 +60,7 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
             @Override
             public void onItemScrolled() {
                 if(mList.getCoverFlowLayout() != null) {
-                    updateAlpha();
+                //    updateAlpha();
                 }
             }
 
@@ -75,7 +75,7 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
                 }
                 Log.i(KotlinUtilsKt.TAG, " itemCount: " + mList.getLayoutManager().getItemCount() +
                         ", selectedPosition: " + position + ", tagPos: " + tagPos);
-                updateAlpha();
+            //    updateAlpha();
             }
         });
     }
