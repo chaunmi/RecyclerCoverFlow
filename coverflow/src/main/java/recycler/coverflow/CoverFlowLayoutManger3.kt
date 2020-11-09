@@ -6,6 +6,7 @@ import android.graphics.*
 import android.util.Log
 import android.util.SparseArray
 import android.util.SparseBooleanArray
+import android.util.SparseIntArray
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
@@ -14,7 +15,7 @@ import recycler.stacklayout.StackSnapHelper
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-class CoverFlowLayoutManger3  private constructor(
+class CoverFlowLayoutManger3(
     isFlat: Boolean, isGreyItem: Boolean,
     isAlphaItem: Boolean, cstInterval: Float,
     isLoop: Boolean, is3DItem: Boolean
@@ -53,6 +54,8 @@ class CoverFlowLayoutManger3  private constructor(
     /**记录Item是否出现过屏幕且还没有回收。true表示出现过屏幕上，并且还没被回收 */
     private val mHasAttachedItems = SparseBooleanArray()
 
+    val mActualPosition2AdapterPosition = SparseIntArray()
+
     /**RecyclerView的Item回收器 */
     private var mRecycle: RecyclerView.Recycler? = null
 
@@ -72,7 +75,7 @@ class CoverFlowLayoutManger3  private constructor(
     private var mLastSelectPosition = 0
 
     /**选中监听 */
-    private var mSelectedListener: OnSelected? = null
+    private var mSelectedListener: OnItemScrollListener? = null
 
     /**是否为平面滚动，Item之间没有叠加，也没有缩放 */
     private var mIsFlatFlow = false
@@ -88,6 +91,9 @@ class CoverFlowLayoutManger3  private constructor(
 
     /**是否启动Item 3D 倾斜 */
     private var mItem3D = false
+
+    var recyclerView: RecyclerView? = null
+
     override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams {
         return RecyclerView.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -148,9 +154,11 @@ class CoverFlowLayoutManger3  private constructor(
         //首次时才需要回调
         if ((mRecycle == null || mState == null)) {  //在为初始化前调用smoothScrollToPosition 或者 scrollToPosition,只会记录位置
             mOffsetAll = calculateOffsetForPosition(selectedPos)          //所以初始化时需要滚动到对应位置
-            onSelectedCallBack()
         }
         layoutItems(recycler, state, SCROLL_TO_LEFT)
+        if(mRecycle == null || mState == null) {
+            onSelectedCallBack()
+        }
         mRecycle = recycler
         mState = state
     }
@@ -224,8 +232,9 @@ class CoverFlowLayoutManger3  private constructor(
 
         val displayFrame = Rect(mOffsetAll, 0, mOffsetAll + horizontalSpace, verticalSpace)
         var position = 0
+        val scrollState = recyclerView?.scrollState
         Log.i(TAG, " layoutItems , offsetAll: $mOffsetAll, childCount: $childCount, " +
-                "displayFrame: $displayFrame , width: ${displayFrame.width()}, ChildWidth: $mDecoratedChildWidth")
+                "displayFrame: $displayFrame , width: ${displayFrame.width()}, ChildWidth: $mDecoratedChildWidth, scrollState: $scrollState")
 
         for (i in 0 until childCount) {
             val child = getChildAt(i) ?: continue
@@ -239,11 +248,14 @@ class CoverFlowLayoutManger3  private constructor(
             if (!Rect.intersects(displayFrame, rect)) { //Item没有在显示区域，就说明需要回收
                 removeAndRecycleView(child, recycler!!) //回收滑出屏幕的View
                 mHasAttachedItems.delete(position)
+                mActualPosition2AdapterPosition.delete(position)
                 Log.i(TAG, " layoutItems, removeAndRecycleView, position: $position, rect: $rect ")
             } else { //Item还在显示区域内，更新滑动后Item的位置
                 layoutItem(child, rect) //更新Item位置
                 Log.i(TAG, " layoutItem, position: $position, rect: $rect, updateLayout ")
                 mHasAttachedItems.put(position, true)
+//                var actualPos = i % itemCount
+//                mActualPosition2AdapterPosition.put(position, actualPos)
             }
         }
 
@@ -257,28 +269,65 @@ class CoverFlowLayoutManger3  private constructor(
             if (min < 0) min = 0
             if (max > itemCount) max = itemCount
         }
+
+        for(i in min until position) {
+            addLayoutView(i, displayFrame, recycler)
+        }
+
+        for (i in max downTo  position + 1) {
+            Log.i(TAG, " downTo test i: $i ")
+            addLayoutView(i, displayFrame, recycler)
+        }
+
+        addLayoutView(position, displayFrame, recycler)
+
         for (i in min until max) {
-            val rect = getFrame(i)
-            if (Rect.intersects(displayFrame, rect) &&
-                !mHasAttachedItems[i]
-            ) { //重新加载可见范围内的Item
-                // 循环滚动时，计算实际的 item 位置
-                var actualPos = i % itemCount
-                // 循环滚动时，位置可能是负值，需要将其转换为对应的 item 的值
-                if (actualPos < 0) actualPos += itemCount
-                val scrap = recycler!!.getViewForPosition(actualPos)
-                checkTag(scrap.tag)
-                scrap.tag = TAG(i)
-                measureChildWithMargins(scrap, 0, 0)
-                if (scrollDirection == SCROLL_TO_RIGHT || mIsFlatFlow) { //item 向右滚动，新增的Item需要添加在最前面
-                    addView(scrap, 0)
-                } else { //item 向左滚动，新增的item要添加在最后面
-                    addView(scrap)
-                }
-                layoutItem(scrap, rect) //将这个Item布局出来
-                Log.i(TAG, " layoutItem, rect: $rect, addView ")
-                mHasAttachedItems.put(i, true)
-            }
+//            val rect = getFrame(i)
+//            if (Rect.intersects(displayFrame, rect) &&
+//                !mHasAttachedItems[i]
+//            ) { //重新加载可见范围内的Item
+//                // 循环滚动时，计算实际的 item 位置
+//                var actualPos = i % itemCount
+//                // 循环滚动时，位置可能是负值，需要将其转换为对应的 item 的值
+//                if (actualPos < 0) actualPos += itemCount
+//                val scrap = recycler!!.getViewForPosition(actualPos)
+//                checkTag(scrap.tag)
+//                scrap.tag = TAG(i)
+//                measureChildWithMargins(scrap, 0, 0)
+//                if (scrollDirection == SCROLL_TO_RIGHT || mIsFlatFlow) { //item 向右滚动，新增的Item需要添加在最前面
+//                    addView(scrap, 0)
+//                } else { //item 向左滚动，新增的item要添加在最后面
+//                    addView(scrap)
+//                }
+//                layoutItem(scrap, rect) //将这个Item布局出来
+//                mActualPosition2AdapterPosition.put(i, actualPos)
+//                Log.i(TAG, " layoutItem, rect: $rect, addView , i: $i, actualPos: $actualPos")
+//                mHasAttachedItems.put(i, true)
+//            }
+        }
+        if(scrollState != RecyclerView.SCROLL_STATE_IDLE) {
+            mSelectedListener?.onItemScrolled()
+        }
+    }
+
+    private fun addLayoutView(i: Int, displayFrame: Rect,   recycler: RecyclerView.Recycler?) {
+        val rect = getFrame(i)
+        if (Rect.intersects(displayFrame, rect) &&
+            !mHasAttachedItems[i]
+        ) { //重新加载可见范围内的Item
+            // 循环滚动时，计算实际的 item 位置
+            var actualPos = i % itemCount
+            // 循环滚动时，位置可能是负值，需要将其转换为对应的 item 的值
+            if (actualPos < 0) actualPos += itemCount
+            val scrap = recycler!!.getViewForPosition(actualPos)
+            checkTag(scrap.tag)
+            scrap.tag = TAG(i)
+            measureChildWithMargins(scrap, 0, 0)
+            addView(scrap)
+            layoutItem(scrap, rect) //将这个Item布局出来
+            mActualPosition2AdapterPosition.put(i, actualPos)
+            Log.i(TAG, " layoutItem, rect: $rect, addView , i: $i, actualPos: $actualPos")
+            mHasAttachedItems.put(i, true)
         }
     }
 
@@ -397,6 +446,7 @@ class CoverFlowLayoutManger3  private constructor(
         child!!.rotationY = symbol * 50 * value
     }
 
+    var hasScrolled = false;
     override fun onScrollStateChanged(state: Int) {
         super.onScrollStateChanged(state)
         when (state) {
@@ -404,15 +454,21 @@ class CoverFlowLayoutManger3  private constructor(
                fixOffsetWhenFinishScroll()  //滚动停止时
             }
             RecyclerView.SCROLL_STATE_DRAGGING -> {
+                hasScrolled = true
             }
             RecyclerView.SCROLL_STATE_SETTLING -> {
+                hasScrolled = true
             }
         }
     }
 
+    override fun onLayoutCompleted(state: RecyclerView.State?) {
+        super.onLayoutCompleted(state)
+    }
+
     override fun scrollToPosition(position: Int) {
         if (position < 0 || position > itemCount - 1) return
-        mOffsetAll = calculateOffsetForPosition(position)
+        mOffsetAll = calculateOffsetForPosition(getChildActualPos(position))
         if (mRecycle == null || mState == null) { //如果RecyclerView还没初始化完，先记录下要滚动的位置
             selectedPos = position
         } else {
@@ -488,7 +544,7 @@ class CoverFlowLayoutManger3  private constructor(
 //
 //        if (scale < 0) scale = 0f
 //        if (scale > 1) scale = 1f
-
+        //距离最中间的第几个view，每个view height被缩放的距离相等，因此可以获得该view被缩放的高度
         val scaledHeight = (abs(x - mStartX)* 1.0f / intervalDistance) * intervalHeightDistance
         val scale =  (getItemHeight() - scaledHeight) / getItemHeight()
 
@@ -527,7 +583,7 @@ class CoverFlowLayoutManger3  private constructor(
     }
 
     /**
-     * 计算Item所在的位置偏移
+     * 计算Item所在的位置偏移, 相对于中间的距离
      * @param position 要计算Item位置
      */
      fun calculateOffsetForPosition(position: Int): Int {
@@ -609,14 +665,16 @@ class CoverFlowLayoutManger3  private constructor(
      */
     private fun onSelectedCallBack() {
         selectedPos = (mOffsetAll / intervalDistance.toFloat()).roundToInt()
-        selectedPos %= itemCount
-        if(selectedPos < 0) {
-            selectedPos += itemCount
+        val adapterPos = mActualPosition2AdapterPosition.get(selectedPos, -10000)
+        var realSelected = selectedPos % itemCount
+        if(realSelected < 0) {
+            realSelected += itemCount
         }
-        if (mSelectedListener != null && (selectedPos == 0 || selectedPos != mLastSelectPosition)) {
-            mSelectedListener!!.onItemSelected(selectedPos)
-            Log.i(TAG, " onSelectedCallBack, selectedPos: $selectedPos, firstPos: $firstVisiblePosition, lastPost: $lastVisiblePosition ")
+        if (mSelectedListener != null && (selectedPos == 0 || selectedPos != mLastSelectPosition || hasScrolled)) {
+            mSelectedListener!!.onItemSelected(realSelected)
+            Log.i(TAG, " onSelectedCallBack, selectedPos: $selectedPos, realSelected: $realSelected, adapterPos: $adapterPos, firstPos: $firstVisiblePosition, lastPos: $lastVisiblePosition ")
         }
+        hasScrolled = false;
         mLastSelectPosition = selectedPos
     }
 
@@ -722,7 +780,7 @@ class CoverFlowLayoutManger3  private constructor(
      * 设置选中监听
      * @param l 监听接口
      */
-    fun setOnSelectedListener(l: OnSelected?) {
+    fun setOnSelectedListener(l: OnItemScrollListener?) {
         mSelectedListener = l
     }
 
@@ -735,12 +793,14 @@ class CoverFlowLayoutManger3  private constructor(
     /**
      * 选中监听接口
      */
-    interface OnSelected {
+    interface OnItemScrollListener {
         /**
          * 监听选中回调
          * @param position 显示在中间的Item的位置
          */
         fun onItemSelected(position: Int)
+
+        fun onItemScrolled()
     }
 
     inner class TAG internal constructor(var pos: Int)

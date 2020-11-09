@@ -48,7 +48,12 @@ public class MyFragment extends Fragment {
         mList.setGreyItem(true); //设置灰度渐变
 //        mList.setAlphaItem(true); //设置半透渐变
         mList.setAdapter(new Adapter(getActivity(), false));
-        mList.setOnItemSelectedListener(new CoverFlowLayoutManger3.OnSelected() {
+        mList.setOnItemSelectedListener(new CoverFlowLayoutManger3.OnItemScrollListener() {
+            @Override
+            public void onItemScrolled() {
+
+            }
+
             @Override
             public void onItemSelected(int position) {
                 mIndex.setText((position+1)+"/"+mList.getLayoutManager().getItemCount());

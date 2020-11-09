@@ -19,7 +19,7 @@ class CoverFlowRecyclerView : RecyclerView {
     /**
      * 布局器构建者
      */
-    private var mManagerBuilder: CoverFlowLayoutManager2.Builder? = null
+    private var mManagerBuilder: CoverFlowLayoutManger3.Builder? = null
 
     constructor(context: Context?) : super(context!!) {
         init()
@@ -42,6 +42,7 @@ class CoverFlowRecyclerView : RecyclerView {
         layoutManager = mManagerBuilder!!.build()
         isChildrenDrawingOrderEnabled = true //开启重新排序
         overScrollMode = View.OVER_SCROLL_NEVER
+        coverFlowLayout?.recyclerView = this
     }
 
     /**
@@ -49,7 +50,7 @@ class CoverFlowRecyclerView : RecyclerView {
      */
     private fun createManageBuilder() {
         if (mManagerBuilder == null) {
-            mManagerBuilder = CoverFlowLayoutManager2.Builder()
+            mManagerBuilder = CoverFlowLayoutManger3.Builder()
         }
     }
 
@@ -121,8 +122,8 @@ class CoverFlowRecyclerView : RecyclerView {
     /**
      * 获取LayoutManger，并强制转换为CoverFlowLayoutManger
      */
-    val coverFlowLayout: CoverFlowLayoutManager2?
-        get() = layoutManager as CoverFlowLayoutManager2?
+    val coverFlowLayout: CoverFlowLayoutManger3?
+        get() = layoutManager as CoverFlowLayoutManger3?
 
     /**
      * 获取被选中的Item位置
@@ -134,7 +135,7 @@ class CoverFlowRecyclerView : RecyclerView {
      * 设置选中监听
      * @param l 监听接口
      */
-    fun setOnItemSelectedListener(l: CoverFlowLayoutManager2.OnSelected?) {
+    fun setOnItemSelectedListener(l: CoverFlowLayoutManger3.OnItemScrollListener?) {
         coverFlowLayout!!.setOnSelectedListener(l)
     }
 

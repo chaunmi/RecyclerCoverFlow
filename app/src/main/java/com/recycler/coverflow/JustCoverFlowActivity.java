@@ -27,6 +27,8 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
         initList();
     }
 
+    final float[] alphas = new float[]{1f, 0.5f, 0.3f, 0.1f};
+    final Adapter adapter = new Adapter(this, this, false);
 
     private void initList() {
         mList = findViewById(R.id.list);
@@ -35,24 +37,33 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
         mList.setAlphaItem(true); //设置半透渐变
 
         mList.setLoop(); //循环滚动，注：循环滚动模式暂不支持平滑滚动
-        mList.setAdapter(new Adapter(this, this, false));
+        mList.getCoverFlowLayout().setRecyclerView(mList);
+        mList.setAdapter(adapter);
 //        mList.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
 //        new PagerSnapHelper().attachToRecyclerView(mList);
 //        mList.scrollToPosition(5);
 
         //参考：https://blog.csdn.net/chunqiuwei/article/details/103187199
         //参考：https://blog.csdn.net/chunqiuwei/article/details/103257452
-        mList.setOnFlingListener(new RecyclerView.OnFlingListener() {
+//        mList.setOnFlingListener(new RecyclerView.OnFlingListener() {
+//            @Override
+//            public boolean onFling(int velocityX, int velocityY) {
+//                RecyclerView.LayoutManager layoutManager = mList.getLayoutManager();
+//                if(layoutManager != null && layoutManager instanceof CoverFlowLayoutManger3) {
+//                    ((CoverFlowLayoutManger3) layoutManager).fixOffsetWhenFinishScroll();
+//                }
+//                return true;
+//            }
+//        });
+
+        mList.setOnItemSelectedListener(new CoverFlowLayoutManger3.OnItemScrollListener() {
             @Override
-            public boolean onFling(int velocityX, int velocityY) {
-                RecyclerView.LayoutManager layoutManager = mList.getLayoutManager();
-                if(layoutManager != null && layoutManager instanceof CoverFlowLayoutManger3) {
-                    ((CoverFlowLayoutManger3) layoutManager).fixOffsetWhenFinishScroll();
+            public void onItemScrolled() {
+                if(mList.getCoverFlowLayout() != null) {
+                    updateAlpha();
                 }
-                return true;
             }
-        });
-        mList.setOnItemSelectedListener(new CoverFlowLayoutManger3.OnSelected() {
+
             @Override
             public void onItemSelected(int position) {
                 ((TextView)findViewById(R.id.index)).setText((position+1)+"/"+mList.getLayoutManager().getItemCount());
@@ -63,9 +74,55 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
                     tagPos = tag.getPos();
                 }
                 Log.i(KotlinUtilsKt.TAG, " itemCount: " + mList.getLayoutManager().getItemCount() +
-                        ", position: " + position + ", tagPos: " + tagPos);
+                        ", selectedPosition: " + position + ", tagPos: " + tagPos);
+                updateAlpha();
             }
         });
+    }
+
+    private void updateAlpha() {
+        CoverFlowLayoutManger3 layoutManger3 = mList.getCoverFlowLayout();
+        int centerPos = layoutManger3.getCenterPosition();
+        int selectedPos = layoutManger3.getSelectedPos();
+
+        int adapterCenterPos = layoutManger3.getMActualPosition2AdapterPosition().get(centerPos, -10000);
+        int adapterSelectedPos = layoutManger3.getMActualPosition2AdapterPosition().get(selectedPos, -10000);
+
+        int min = centerPos - 2;
+        int max = centerPos + 2;
+        Log.i(KotlinUtilsKt.TAG, " onItemScrolled centerPos: " + centerPos +
+                ", selectedPos: " + selectedPos + ", adapterCenterPos: " + adapterCenterPos + ", adapterSelectedPos: " + adapterSelectedPos + ", childCount: " + mList.getChildCount());
+        for(int i = min; i <= max; i++) {
+            int interval = Math.abs(i - centerPos);
+            float alpha = 0.0f;
+            if(interval < 3) {
+                alpha = alphas[interval];
+            }
+            int index = i % adapter.getItemCount();
+            if(index < 0) {
+                index = index + adapter.getItemCount();
+            }
+            int indexOfChild = -10000;
+            int tagPos = -10000;
+            Adapter.ViewHolder viewHolder = adapter.viewHolders.get(index);
+            if(viewHolder != null) {
+        //        viewHolder.img.setAlpha(alpha);
+                indexOfChild = mList.indexOfChild(viewHolder.itemView);
+                Object tag = viewHolder.itemView.getTag();
+                if(tag != null && tag instanceof CoverFlowLayoutManger3.TAG) {
+                   tagPos = ((CoverFlowLayoutManger3.TAG)tag).getPos();
+                }
+            }
+            Log.i(KotlinUtilsKt.TAG, " onItemScrolled setAlpha, i: " + i + ", index: " + index + ", indexOfChild: " + indexOfChild + ", tagPos: " + tagPos + ", alpha: " + alpha + ", viewHolder : " + (viewHolder != null));
+        }
+        for(int i = 0;  i < mList.getChildCount(); i++) {
+            View view = mList.getChildAt(i);
+            RecyclerView.ViewHolder object = mList.findContainingViewHolder(view);
+            if(object != null && object instanceof Adapter.ViewHolder) {
+                float alpha = ((Adapter.ViewHolder)object).img.getAlpha();
+                Log.i(KotlinUtilsKt.TAG, " onItemScrolled getAlpha, i: " + i + ", alpha: " + alpha);
+            }
+        }
     }
 
     @Override
