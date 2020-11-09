@@ -88,10 +88,13 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
         int adapterCenterPos = layoutManger3.getMActualPosition2AdapterPosition().get(centerPos, -10000);
         int adapterSelectedPos = layoutManger3.getMActualPosition2AdapterPosition().get(selectedPos, -10000);
 
+        int centerIndex = mList.getCoverFlowLayout().getMActualPos2LayoutPos().get(centerPos);
+
         int min = centerPos - 2;
         int max = centerPos + 2;
-        Log.i(KotlinUtilsKt.TAG, " onItemScrolled centerPos: " + centerPos +
-                ", selectedPos: " + selectedPos + ", adapterCenterPos: " + adapterCenterPos + ", adapterSelectedPos: " + adapterSelectedPos + ", childCount: " + mList.getChildCount());
+        Log.i(KotlinUtilsKt.TAG, " onItemScrolled centerPos: " + centerPos + ", centerIndex: " + centerIndex +
+                ", selectedPos: " + selectedPos + ", adapterCenterPos: " + adapterCenterPos +
+                ", adapterSelectedPos: " + adapterSelectedPos + ", childCount: " + mList.getChildCount());
         for(int i = min; i <= max; i++) {
             int interval = Math.abs(i - centerPos);
             float alpha = 0.0f;
