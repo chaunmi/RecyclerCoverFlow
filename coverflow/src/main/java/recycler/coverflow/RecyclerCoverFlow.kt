@@ -141,6 +141,7 @@ class RecyclerCoverFlow : RecyclerView {
         }
         Log.i(TAG, "center: $center, actualPos: $actualPos, childCount: $childCount, order: $order, index: $i, adapterCenterPos: $adapterCenterPos, adapterPos: $adapterPos ")
         if (order < 0) order = 0 else if (order > childCount - 1) order = childCount - 1
+        coverFlowLayout!!.mActualPos2LayoutPos.put(actualPos, i)
         return order
     }
 

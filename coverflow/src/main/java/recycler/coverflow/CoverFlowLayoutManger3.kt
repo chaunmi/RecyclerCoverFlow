@@ -56,6 +56,8 @@ class CoverFlowLayoutManger3(
 
     val mActualPosition2AdapterPosition = SparseIntArray()
 
+    val mActualPos2LayoutPos = SparseIntArray()
+
     /**RecyclerView的Item回收器 */
     private var mRecycle: RecyclerView.Recycler? = null
 
@@ -252,7 +254,7 @@ class CoverFlowLayoutManger3(
                 Log.i(TAG, " layoutItems, removeAndRecycleView, position: $position, rect: $rect ")
             } else { //Item还在显示区域内，更新滑动后Item的位置
                 layoutItem(child, rect) //更新Item位置
-                Log.i(TAG, " layoutItem, position: $position, rect: $rect, updateLayout ")
+                Log.i(TAG, " layoutItem, updateLayout position: $position, rect: $rect ")
                 mHasAttachedItems.put(position, true)
 //                var actualPos = i % itemCount
 //                mActualPosition2AdapterPosition.put(position, actualPos)
@@ -309,7 +311,7 @@ class CoverFlowLayoutManger3(
             }
             layoutItem(scrap, rect) //将这个Item布局出来
             mActualPosition2AdapterPosition.put(i, actualPos)
-            Log.i(TAG, " layoutItem, rect: $rect, addView , i: $i, actualPos: $actualPos")
+            Log.i(TAG, " layoutItem, addView rect: $rect , i: $i, actualPos: $actualPos")
             mHasAttachedItems.put(i, true)
         }
     }
