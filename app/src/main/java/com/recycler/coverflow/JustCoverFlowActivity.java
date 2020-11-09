@@ -60,7 +60,7 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
             @Override
             public void onItemScrolled() {
                 if(mList.getCoverFlowLayout() != null) {
-                    updateAlpha();
+                    updateAlpha("onItemScrolled");
                 }
             }
 
@@ -73,14 +73,14 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
                     CoverFlowLayoutManger3.TAG tag = (CoverFlowLayoutManger3.TAG)(view.getTag());
                     tagPos = tag.getPos();
                 }
-                Log.i(KotlinUtilsKt.TAG, " itemCount: " + mList.getLayoutManager().getItemCount() +
+                Log.i(KotlinUtilsKt.TAG, "onItemSelected  itemCount: " + mList.getLayoutManager().getItemCount() +
                         ", selectedPosition: " + position + ", tagPos: " + tagPos);
-                updateAlpha();
+                updateAlpha("onItemSelected");
             }
         });
     }
 
-    private void updateAlpha() {
+    private void updateAlpha(String logTag) {
         CoverFlowLayoutManger3 layoutManger3 = mList.getCoverFlowLayout();
         int centerPos = layoutManger3.getCenterPosition();
         int selectedPos = layoutManger3.getSelectedPos();
@@ -92,7 +92,7 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
 
         int min = centerPos - 2;
         int max = centerPos + 2;
-        Log.i(KotlinUtilsKt.TAG, " onItemScrolled centerPos: " + centerPos + ", centerIndex: " + centerIndex +
+        Log.i(KotlinUtilsKt.TAG,  logTag + "  centerPos: " + centerPos + ", centerIndex: " + centerIndex +
                 ", selectedPos: " + selectedPos + ", adapterCenterPos: " + adapterCenterPos +
                 ", adapterSelectedPos: " + adapterSelectedPos + ", childCount: " + mList.getChildCount());
         for(int i = min; i <= max; i++) {
@@ -120,14 +120,14 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
                     }
                 }
             }
-            Log.i(KotlinUtilsKt.TAG, " onItemScrolled setAlpha, i: " + i + ", index: " + index + ", indexOfChild: " + indexOfChild + ", tagPos: " + tagPos + ", alpha: " + alpha + ", viewHolder : " + (view != null));
+            Log.i(KotlinUtilsKt.TAG,  logTag + "  setAlpha, i: " + i + ", index: " + index + ", indexOfChild: " + indexOfChild + ", tagPos: " + tagPos + ", alpha: " + alpha + ", viewHolder : " + (view != null));
         }
         for(int i = 0;  i < mList.getChildCount(); i++) {
             View view = mList.getChildAt(i);
             RecyclerView.ViewHolder object = mList.findContainingViewHolder(view);
             if(object != null && object instanceof Adapter.ViewHolder) {
                 float alpha = ((Adapter.ViewHolder)object).img.getAlpha();
-                Log.i(KotlinUtilsKt.TAG, " onItemScrolled getAlpha, i: " + i + ", alpha: " + alpha);
+                Log.i(KotlinUtilsKt.TAG, logTag + "  getAlpha, i: " + i + ", alpha: " + alpha);
             }
         }
     }

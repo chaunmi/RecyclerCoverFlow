@@ -158,9 +158,6 @@ class CoverFlowLayoutManger3(
             mOffsetAll = calculateOffsetForPosition(selectedPos)          //所以初始化时需要滚动到对应位置
         }
         layoutItems(recycler, state, SCROLL_TO_LEFT)
-        if(mRecycle == null || mState == null) {
-            onSelectedCallBack()
-        }
         mRecycle = recycler
         mState = state
     }
@@ -449,6 +446,7 @@ class CoverFlowLayoutManger3(
 
     override fun onLayoutCompleted(state: RecyclerView.State?) {
         super.onLayoutCompleted(state)
+        onSelectedCallBack()
     }
 
     override fun scrollToPosition(position: Int) {
