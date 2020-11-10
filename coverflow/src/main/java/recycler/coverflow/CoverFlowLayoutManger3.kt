@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import androidx.recyclerview.widget.RecyclerView
 import recycler.stacklayout.StackSnapHelper
+import java.util.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -57,6 +58,8 @@ class CoverFlowLayoutManger3(
     val mActualPosition2AdapterPosition = SparseIntArray()
 
     val mActualPos2LayoutPos = SparseIntArray()
+
+    val mOffsetPos2ChildIndex = LinkedList<Int>()
 
     /**RecyclerView的Item回收器 */
     private var mRecycle: RecyclerView.Recycler? = null
@@ -248,6 +251,7 @@ class CoverFlowLayoutManger3(
                 removeAndRecycleView(child, recycler!!) //回收滑出屏幕的View
                 mHasAttachedItems.delete(position)
                 mActualPosition2AdapterPosition.delete(position)
+                mOffsetPos2ChildIndex.remove(position)
                 Log.i(TAG, " layoutItems, removeAndRecycleView, position: $position, rect: $rect ")
             } else { //Item还在显示区域内，更新滑动后Item的位置
                 layoutItem(child, rect) //更新Item位置
@@ -261,8 +265,8 @@ class CoverFlowLayoutManger3(
         position = centerPosition
 
         // 检查前后 20 个 item 是否需要绘制
-        var min = position - 10
-        var max = position + 10
+        var min = position - 5
+        var max = position + 5
 
         if (!mIsLoop) {
             if (min < 0) min = 0
@@ -303,8 +307,10 @@ class CoverFlowLayoutManger3(
             measureChildWithMargins(scrap, 0, 0)
             if (scrollDirection == SCROLL_TO_RIGHT || mIsFlatFlow) { //item 向右滚动，新增的Item需要添加在最前面
                 addView(scrap, 0)
+                mOffsetPos2ChildIndex.add(0, i)
             } else { //item 向左滚动，新增的item要添加在最后面
                 addView(scrap)
+                mOffsetPos2ChildIndex.add(i)
             }
             layoutItem(scrap, rect) //将这个Item布局出来
             mActualPosition2AdapterPosition.put(i, actualPos)
@@ -446,6 +452,7 @@ class CoverFlowLayoutManger3(
 
     override fun onLayoutCompleted(state: RecyclerView.State?) {
         super.onLayoutCompleted(state)
+        Log.i(TAG, " onLayoutCompleted startScroll")
         onSelectedCallBack()
     }
 
@@ -612,7 +619,7 @@ class CoverFlowLayoutManger3(
         if (mAnimation?.isRunning == true) {
             mAnimation?.cancel()
         }
-        Log.i(TAG, " startScroll, from: $from, to: $to ")
+        Log.i(TAG, "startScroll, from: $from, to: $to ")
         val direction = if (from < to) SCROLL_TO_LEFT else SCROLL_TO_RIGHT
         mAnimation = ValueAnimator.ofFloat(from.toFloat(), to.toFloat())
         mAnimation?.apply {
@@ -625,9 +632,10 @@ class CoverFlowLayoutManger3(
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator) {}
                 override fun onAnimationEnd(animation: Animator) {
-                    onSelectedCallBack()
+                    recyclerView?.post {
+                        onSelectedCallBack()
+                    }
                 }
-
                 override fun onAnimationCancel(animation: Animator) {}
                 override fun onAnimationRepeat(animation: Animator) {}
             })
