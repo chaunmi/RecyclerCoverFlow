@@ -20,7 +20,7 @@ class CoverFlowLayoutManger3(
     isFlat: Boolean, isGreyItem: Boolean,
     isAlphaItem: Boolean, cstInterval: Float,
     isLoop: Boolean, is3DItem: Boolean
-) : RecyclerView.LayoutManager()/*,RecyclerView.SmoothScroller.ScrollVectorProvider*/ {
+) : RecyclerView.LayoutManager() {
     /**滑动总偏移量 */
     private var mOffsetAll = 0
 
@@ -56,10 +56,6 @@ class CoverFlowLayoutManger3(
     private val mHasAttachedItems = SparseBooleanArray()
 
     val mActualPosition2AdapterPosition = SparseIntArray()
-
-    val mActualPos2LayoutPos = SparseIntArray()
-
-    val mOffsetPos2ChildIndex = LinkedList<Int>()
 
     /**RecyclerView的Item回收器 */
     private var mRecycle: RecyclerView.Recycler? = null
@@ -113,25 +109,6 @@ class CoverFlowLayoutManger3(
     private fun getItemHeight(): Int {
         return verticalSpace
     }
-
-//    override fun computeScrollVectorForPosition(targetPosition: Int): PointF? {
-//        if (childCount == 0) {
-//            return null
-//        }
-//        val firstChildPos = getPosition(getChildAt(0)!!)
-//        val distancePos = targetPosition - firstChildPos
-//        val direction = if (targetPosition < firstChildPos) {
-//            // start
-//            if (itemCount > 2 * abs(distancePos)) -1 else 1
-//        } else {
-//            // end
-//            if (itemCount > 2 * abs(distancePos)) -1 else 1
-//        }
-//        return PointF(direction.toFloat(), 0f)
-//    //    val direction = if (targetPosition < firstChildPos) -1 else 1
-//    //    return PointF(direction.toFloat(), 0f)
-//
-//    }
 
     override fun onLayoutChildren(recycler: RecyclerView.Recycler, state: RecyclerView.State) {
         //如果没有item，直接返回
@@ -251,14 +228,11 @@ class CoverFlowLayoutManger3(
                 removeAndRecycleView(child, recycler!!) //回收滑出屏幕的View
                 mHasAttachedItems.delete(position)
                 mActualPosition2AdapterPosition.delete(position)
-                mOffsetPos2ChildIndex.remove(position)
                 Log.i(TAG, " layoutItems, removeAndRecycleView, position: $position, rect: $rect ")
             } else { //Item还在显示区域内，更新滑动后Item的位置
                 layoutItem(child, rect) //更新Item位置
                 Log.i(TAG, " layoutItem, updateLayout position: $position, rect: $rect ")
                 mHasAttachedItems.put(position, true)
-//                var actualPos = i % itemCount
-//                mActualPosition2AdapterPosition.put(position, actualPos)
             }
         }
 
@@ -272,17 +246,6 @@ class CoverFlowLayoutManger3(
             if (min < 0) min = 0
             if (max > itemCount) max = itemCount
         }
-
-//        for(i in min until position) {
-//            addLayoutView(i, displayFrame, recycler)
-//        }
-//
-//        for (i in max downTo  position + 1) {
-//            Log.i(TAG, " downTo test i: $i ")
-//            addLayoutView(i, displayFrame, recycler)
-//        }
-//
-//        addLayoutView(position, displayFrame, recycler)
 
         for (i in min until max) {
             addLayoutView(i, displayFrame, recycler, scrollDirection)
@@ -307,10 +270,8 @@ class CoverFlowLayoutManger3(
             measureChildWithMargins(scrap, 0, 0)
             if (scrollDirection == SCROLL_TO_RIGHT || mIsFlatFlow) { //item 向右滚动，新增的Item需要添加在最前面
                 addView(scrap, 0)
-                mOffsetPos2ChildIndex.add(0, i)
             } else { //item 向左滚动，新增的item要添加在最后面
                 addView(scrap)
-                mOffsetPos2ChildIndex.add(i)
             }
             layoutItem(scrap, rect) //将这个Item布局出来
             mActualPosition2AdapterPosition.put(i, actualPos)

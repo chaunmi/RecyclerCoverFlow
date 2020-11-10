@@ -129,8 +129,6 @@ class RecyclerCoverFlow : RecyclerView {
         // 获取 RecyclerView 中第 i 个 子 view 的实际位置
         val actualPos = coverFlowLayout!!.getChildActualPos(i)
 
-        val offsetPos = coverFlowLayout!!.mOffsetPos2ChildIndex[i]
-
         val adapterCenterPos = coverFlowLayout!!.mActualPosition2AdapterPosition.get(center, -10000)
         val adapterPos = coverFlowLayout!!.mActualPosition2AdapterPosition.get(actualPos, -10000)
         // 距离中间item的间隔数
@@ -141,9 +139,8 @@ class RecyclerCoverFlow : RecyclerView {
         } else { // [>= 0] 说明 item 位于中间 item 右边，需要将顺序颠倒绘制
             childCount - 1 - dist
         }
-        Log.i(TAG, "center: $center, actualPos: $actualPos, offsetPos: $offsetPos, childCount: $childCount, order: $order, index: $i, adapterCenterPos: $adapterCenterPos, adapterPos: $adapterPos ")
+        Log.i(TAG, "center: $center, actualPos: $actualPos, childCount: $childCount, order: $order, index: $i, adapterCenterPos: $adapterCenterPos, adapterPos: $adapterPos ")
         if (order < 0) order = 0 else if (order > childCount - 1) order = childCount - 1
-        coverFlowLayout!!.mActualPos2LayoutPos.put(actualPos, i)
         return order
     }
 
