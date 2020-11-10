@@ -632,9 +632,7 @@ class CoverFlowLayoutManger3(
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator) {}
                 override fun onAnimationEnd(animation: Animator) {
-                    recyclerView?.post {
-                        onSelectedCallBack()
-                    }
+                    onSelectedCallBack()
                 }
                 override fun onAnimationCancel(animation: Animator) {}
                 override fun onAnimationRepeat(animation: Animator) {}

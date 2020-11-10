@@ -27,7 +27,7 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
         initList();
     }
 
-    final float[] alphas = new float[]{1f, 0.5f, 0.3f, 0.1f};
+    final float[] alphas = new float[]{1f, 0.5f, 0.1f, 0.05f};
     final Adapter adapter = new Adapter(this, this, false);
 
     private void initList() {
