@@ -22,7 +22,7 @@ class CoverFlowLayoutManger3(
     isLoop: Boolean, is3DItem: Boolean
 ) : RecyclerView.LayoutManager() {
     /**滑动总偏移量 */
-    private var mOffsetAll = 0
+     var mOffsetAll = 0
 
     /**Item宽 */
     private var mDecoratedChildWidth = 0
@@ -269,10 +269,16 @@ class CoverFlowLayoutManger3(
             if (min < 0) min = 0
             if (max > itemCount) max = itemCount
         }
-
-        for (i in min until max) {
-            addLayoutView(i, displayFrame, recycler, scrollDirection)
+        if(scrollDirection == SCROLL_TO_RIGHT) {
+            for(i in max downTo min) {
+                addLayoutView(i, displayFrame, recycler, scrollDirection)
+            }
+        }else {
+            for (i in min until max) {
+                addLayoutView(i, displayFrame, recycler, scrollDirection)
+            }
         }
+
         if(scrollState != RecyclerView.SCROLL_STATE_IDLE) {
             mSelectedListener?.onItemScrolled()
         }
@@ -574,6 +580,7 @@ class CoverFlowLayoutManger3(
             if (abs(moreDx) > intervalDistance * 0.5) {
                 if (moreDx > 0) scrollN++ else scrollN--
             }
+            Log.i(TAG, " fixOffsetWhenFinishScroll  ")
             val finalOffset = scrollN * intervalDistance
             startScroll(mOffsetAll, finalOffset)
         //    selectedPos = abs((finalOffset * 1.0f / intervalDistance).roundToInt()) % itemCount
@@ -750,6 +757,7 @@ class CoverFlowLayoutManger3(
             if (abs(more) >= intervalDistance * 0.5f) {
                 if (more >= 0) pos++ else pos--
             }
+   //         Log.i(TAG, " centerPosition, mOffsetAll: $mOffsetAll, more: $more, intervalDistance: $intervalDistance, pos: $pos ")
             return pos
         }
 

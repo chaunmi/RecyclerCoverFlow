@@ -125,6 +125,11 @@ class RecyclerCoverFlow : RecyclerView {
     }
 
     public override fun getChildDrawingOrder(childCount: Int, i: Int): Int {
+
+        if(i == 0) {
+            Log.i(TAG, " --------------------------------------------------------- ")
+        }
+
         val center = coverFlowLayout!!.centerPosition
         // 获取 RecyclerView 中第 i 个 子 view 的实际位置
         val actualPos = coverFlowLayout!!.getChildActualPos(i)
@@ -139,7 +144,7 @@ class RecyclerCoverFlow : RecyclerView {
         } else { // [>= 0] 说明 item 位于中间 item 右边，需要将顺序颠倒绘制
             childCount - 1 - dist
         }
-        Log.i(TAG, "center: $center, actualPos: $actualPos, childCount: $childCount, order: $order, index: $i, adapterCenterPos: $adapterCenterPos, adapterPos: $adapterPos ")
+        Log.i(TAG, "center: $center, actualPos: $actualPos, childCount: $childCount, order: $order, index: $i, adapterCenterPos: $adapterCenterPos, adapterPos: $adapterPos, offsetAll: ${coverFlowLayout!!.mOffsetAll}, distance: ${coverFlowLayout!!.intervalDistance} ")
         if (order < 0) order = 0 else if (order > childCount - 1) order = childCount - 1
         return order
     }
