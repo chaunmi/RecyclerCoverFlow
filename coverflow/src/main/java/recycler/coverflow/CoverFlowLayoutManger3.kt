@@ -195,6 +195,14 @@ class CoverFlowLayoutManger3(
     }
 
 
+    fun isNeedShow(displayFrame: Rect, item: Rect): Boolean {
+        if(item.right > displayFrame.right + 5*intervalDistance ||
+                item.left < displayFrame.left - 5*intervalDistance) {
+            return false
+        }
+        return true
+    }
+
     /**
      * 布局Item
      *
@@ -213,7 +221,7 @@ class CoverFlowLayoutManger3(
         var position = 0
         val scrollState = recyclerView?.scrollState
         Log.i(TAG, " layoutItems , offsetAll: $mOffsetAll, childCount: $childCount, " +
-                "displayFrame: $displayFrame , width: ${displayFrame.width()}, ChildWidth: $mDecoratedChildWidth, scrollState: $scrollState")
+                "displayFrame rect: $displayFrame , width: ${displayFrame.width()}, ChildWidth: $mDecoratedChildWidth, scrollState: $scrollState")
 
         for (i in 0 until childCount) {
             val child = getChildAt(i) ?: continue
@@ -224,7 +232,7 @@ class CoverFlowLayoutManger3(
                 getPosition(child)
             }
             val rect = getFrame(position)
-            if (!Rect.intersects(displayFrame, rect)) { //Item没有在显示区域，就说明需要回收
+            if (!isNeedShow(displayFrame, rect)/*!Rect.intersects(displayFrame, rect)*/) { //Item没有在显示区域，就说明需要回收
                 removeAndRecycleView(child, recycler!!) //回收滑出屏幕的View
                 mHasAttachedItems.delete(position)
                 mActualPosition2AdapterPosition.delete(position)
@@ -257,7 +265,7 @@ class CoverFlowLayoutManger3(
 
     private fun addLayoutView(i: Int, displayFrame: Rect,   recycler: RecyclerView.Recycler?, scrollDirection: Int) {
         val rect = getFrame(i)
-        if (Rect.intersects(displayFrame, rect) &&
+        if (isNeedShow(displayFrame, rect)/*Rect.intersects(displayFrame, rect)*/ &&
             !mHasAttachedItems[i]
         ) { //重新加载可见范围内的Item
             // 循环滚动时，计算实际的 item 位置
@@ -581,14 +589,19 @@ class CoverFlowLayoutManger3(
             mAnimation?.cancel()
         }
         Log.i(TAG, "startScroll, from: $from, to: $to ")
-        val direction = if (from < to) SCROLL_TO_LEFT else SCROLL_TO_RIGHT
         mAnimation = ValueAnimator.ofFloat(from.toFloat(), to.toFloat())
         mAnimation?.apply {
             duration = 500
             interpolator = DecelerateInterpolator()
             addUpdateListener(ValueAnimator.AnimatorUpdateListener { animation ->
-                mOffsetAll = (animation.animatedValue as Float).roundToInt()
-                layoutItems(mRecycle, mState, direction)
+            //    mOffsetAll = (animation.animatedValue as Float).roundToInt()
+                Log.i(TAG, "startScroll, animator offsetAll: $mOffsetAll ")
+                val currentValue = (animation.animatedValue as Float).roundToInt()
+                val direction = if (mOffsetAll < currentValue) SCROLL_TO_LEFT else SCROLL_TO_RIGHT
+                if(currentValue != mOffsetAll) {
+                    mOffsetAll = currentValue
+                    layoutItems(mRecycle, mState, direction)
+                }
             })
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator) {}
@@ -605,10 +618,9 @@ class CoverFlowLayoutManger3(
     /**
      * 获取Item间隔
      */
-    private val intervalDistance: Int
-        private get() = 150
+   var intervalDistance: Int = 150
 
-    private val intervalHeightDistance: Int = 75
+    var intervalHeightDistance: Int = 75
 
     /**
      * 计算当前选中位置，并回调

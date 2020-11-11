@@ -1,5 +1,6 @@
 package com.recycler.coverflow;
 
+import android.content.Context;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,6 +21,11 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
 
     private RecyclerCoverFlow mList;
 
+    public static int dip2px(Context context, float dpValue) {
+        float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +44,10 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
 
         mList.setLoop(); //循环滚动，注：循环滚动模式暂不支持平滑滚动
         mList.getCoverFlowLayout().setRecyclerView(mList);
+
+        mList.getCoverFlowLayout().setIntervalDistance(dip2px(this, 7));
+        mList.getCoverFlowLayout().setIntervalHeightDistance(dip2px(this, 8));
+
         mList.setAdapter(adapter);
 //        mList.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
 //        new PagerSnapHelper().attachToRecyclerView(mList);
@@ -141,8 +151,6 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
             }
         }
     }
-
-
 
     @Override
     public void clickItem(int pos) {
