@@ -127,7 +127,7 @@ class RecyclerCoverFlow : RecyclerView {
     public override fun getChildDrawingOrder(childCount: Int, i: Int): Int {
 
         if(i == 0) {
-            Log.i(TAG, " --------------------------------------------------------- ")
+            Log.i(TAG, " --------------------start layout order------------------------------------- ")
         }
 
         val center = coverFlowLayout!!.centerPosition
