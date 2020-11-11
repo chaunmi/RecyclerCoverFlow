@@ -41,7 +41,6 @@ class CoverFlowLayoutManger3(
             return 0.8f
         }
 
-    private var snapHelper: CoverFlowSnapHelper? = null
 
     /**起始ItemX坐标 */
     private var mStartX = 0
@@ -856,7 +855,6 @@ class CoverFlowLayoutManger3(
                 mIntervalRatio = 1.1f
             }
         }
-        snapHelper = CoverFlowSnapHelper()
     }
 
 }
