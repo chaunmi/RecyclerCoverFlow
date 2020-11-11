@@ -23,7 +23,7 @@ import java.util.HashMap;
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
     private Context mContext;
-    private int[] mColors = {R.mipmap.item1,R.mipmap.item2,R.mipmap.item3,R.mipmap.item4, R.mipmap.item5, R.mipmap.item6, R.mipmap.item7};
+    private int[] mColors = {R.mipmap.item7,R.mipmap.item1,R.mipmap.item2,R.mipmap.item3,R.mipmap.item4, R.mipmap.item5, R.mipmap.item6 };
 
     private String[] imgs = {"http://shp.qpic.cn/tgos/7932/5052de58a899245741ea3bbf7e806f4e/0"};
     HashMap<Integer, ViewHolder> viewHolders = new HashMap();
