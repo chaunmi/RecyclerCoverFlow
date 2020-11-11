@@ -132,7 +132,8 @@ class CoverFlowLayoutManger3(
             return
         }
 
-        mStartX = (MAX_COUNT / 2) * intervalDistance  //最中间那个为起始item
+    //    mStartX = (MAX_COUNT / 2) * intervalDistance  //最中间那个为起始item
+        mStartX = ((horizontalSpace - mDecoratedChildWidth) * 1.0f / 2).roundToInt()
         mStartY = 0
 
         Log.i(TAG, " onLayoutChildren, itemWidth: $mDecoratedChildWidth, startX: $mStartX  rect: ")
@@ -232,7 +233,7 @@ class CoverFlowLayoutManger3(
         val scrollState = recyclerView?.scrollState
         Log.i(TAG, " layoutItems , offsetAll: $mOffsetAll, childCount: $childCount, " +
                 "displayFrame rect: $displayFrame , width: ${displayFrame.width()}, ChildWidth: $mDecoratedChildWidth, scrollState: $scrollState, interval: $intervalDistance")
-
+        var minLeft = 0
         for (i in 0 until childCount) {
             val child = getChildAt(i)
             if(child == null) {
@@ -247,12 +248,16 @@ class CoverFlowLayoutManger3(
                 Log.i(TAG, " layoutItems, getPosition ")
             }
             val rect = getFrame(position)
+
             if (!isNeedShow(displayFrame, rect)/*!Rect.intersects(displayFrame, rect)*/) { //Item没有在显示区域，就说明需要回收
                 removeAndRecycleView(child, recycler!!) //回收滑出屏幕的View
                 mHasAttachedItems.delete(position)
                 mActualPosition2AdapterPosition.delete(position)
                 Log.i(TAG, " layoutItems, removeAndRecycleView, position: $position, i: $i, rect: $rect ")
             } else { //Item还在显示区域内，更新滑动后Item的位置
+                if(minLeft < rect.left) {
+                    minLeft = rect.left
+                }
                 layoutItem(child, rect) //更新Item位置
                 Log.i(TAG, " layoutItem, updateLayout position: $position, i: $i, rect: $rect ")
                 mHasAttachedItems.put(position, true)
@@ -273,20 +278,20 @@ class CoverFlowLayoutManger3(
         }
         if(scrollDirection == SCROLL_TO_RIGHT) {
             for(i in max downTo min) {
-                addLayoutView(i, displayFrame, recycler, scrollDirection, centerRect, position)
+                addLayoutView(i, displayFrame, recycler, scrollDirection, centerRect, position, minLeft)
             }
         }else {
             for (i in min until max) {
-                addLayoutView(i, displayFrame, recycler, scrollDirection, centerRect, position)
+                addLayoutView(i, displayFrame, recycler, scrollDirection, centerRect, position, minLeft)
             }
         }
-
+        requestLayout()
         if(scrollState != RecyclerView.SCROLL_STATE_IDLE) {
             mSelectedListener?.onItemScrolled()
         }
     }
 
-    private fun addLayoutView(i: Int, displayFrame: Rect,   recycler: RecyclerView.Recycler?, scrollDirection: Int, centerRect: Rect, centerPosition: Int) {
+    private fun addLayoutView(i: Int, displayFrame: Rect,   recycler: RecyclerView.Recycler?, scrollDirection: Int, centerRect: Rect, centerPosition: Int, minLeft: Int) {
         val rect = getFrame(i)
         if (isNeedShow(displayFrame, rect)/*Rect.intersects(displayFrame, rect)*/ &&
             !mHasAttachedItems[i]
@@ -299,7 +304,7 @@ class CoverFlowLayoutManger3(
             checkTag(scrap.tag)
             scrap.tag = TAG(i)
             measureChildWithMargins(scrap, 0, 0)
-            if ((scrollDirection == SCROLL_TO_RIGHT && (rect.left <= centerRect.left || i <= centerPosition)) || mIsFlatFlow) { //item 向右滚动，新增的Item需要添加在最前面
+            if ((scrollDirection == SCROLL_TO_RIGHT && (rect.left <= centerRect.left || rect.left < minLeft || i <= centerPosition)) || mIsFlatFlow) { //item 向右滚动，新增的Item需要添加在最前面
                 addView(scrap, 0)
             } else { //item 向左滚动，新增的item要添加在最后面
                 addView(scrap)

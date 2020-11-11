@@ -55,16 +55,16 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
 
         //参考：https://blog.csdn.net/chunqiuwei/article/details/103187199
         //参考：https://blog.csdn.net/chunqiuwei/article/details/103257452
-//        mList.setOnFlingListener(new RecyclerView.OnFlingListener() {
-//            @Override
-//            public boolean onFling(int velocityX, int velocityY) {
-//                RecyclerView.LayoutManager layoutManager = mList.getLayoutManager();
-//                if(layoutManager != null && layoutManager instanceof CoverFlowLayoutManger3) {
-//                    ((CoverFlowLayoutManger3) layoutManager).fixOffsetWhenFinishScroll();
-//                }
-//                return true;
-//            }
-//        });
+        mList.setOnFlingListener(new RecyclerView.OnFlingListener() {
+            @Override
+            public boolean onFling(int velocityX, int velocityY) {
+                RecyclerView.LayoutManager layoutManager = mList.getLayoutManager();
+                if(layoutManager != null && layoutManager instanceof CoverFlowLayoutManger3) {
+                    ((CoverFlowLayoutManger3) layoutManager).fixOffsetWhenFinishScroll();
+                }
+                return true;
+            }
+        });
 
         mList.setOnItemSelectedListener(new CoverFlowLayoutManger3.OnItemScrollListener() {
             @Override
