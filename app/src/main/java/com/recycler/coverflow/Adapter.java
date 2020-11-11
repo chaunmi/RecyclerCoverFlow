@@ -23,7 +23,9 @@ import java.util.HashMap;
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
     private Context mContext;
-    private int[] mColors = {R.mipmap.item1,R.mipmap.item2,R.mipmap.item3,R.mipmap.item4, R.mipmap.item5, R.mipmap.item6};
+    private int[] mColors = {R.mipmap.item1,R.mipmap.item2,R.mipmap.item3,R.mipmap.item4, R.mipmap.item5, R.mipmap.item6, R.mipmap.item7};
+
+    private String[] imgs = {"http://shp.qpic.cn/tgos/7932/5052de58a899245741ea3bbf7e806f4e/0"};
     HashMap<Integer, ViewHolder> viewHolders = new HashMap();
 
     private onItemClick clickCb;
@@ -56,7 +58,9 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
         viewHolders.put(position, holder);
+
         Glide.with(mContext).load(mColors[position]).placeholder(R.mipmap.default_load_icon_medium).into(holder.img);
+
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

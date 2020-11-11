@@ -267,8 +267,8 @@ class CoverFlowLayoutManger3(
         position = centerPosition
         Log.i(TAG, " layoutItem, centerPosition: $position, startAddView ---------------------------- ")
         // 检查前后 20 个 item 是否需要绘制
-        var min = position - 2
-        var max = position + 2
+        var min = position - 3
+        var max = position + 3
 
         var centerRect = getFrame(position)
 
@@ -286,9 +286,11 @@ class CoverFlowLayoutManger3(
             }
         }
         requestLayout()
+
         if(scrollState != RecyclerView.SCROLL_STATE_IDLE) {
             mSelectedListener?.onItemScrolled()
         }
+
     }
 
     private fun addLayoutView(i: Int, displayFrame: Rect,   recycler: RecyclerView.Recycler?, scrollDirection: Int, centerRect: Rect, centerPosition: Int, minLeft: Int) {

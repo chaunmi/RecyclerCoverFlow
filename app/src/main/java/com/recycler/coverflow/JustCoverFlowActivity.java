@@ -45,8 +45,8 @@ public class JustCoverFlowActivity extends AppCompatActivity implements Adapter.
         mList.setLoop(); //循环滚动，注：循环滚动模式暂不支持平滑滚动
         mList.getCoverFlowLayout().setRecyclerView(mList);
 
-        mList.getCoverFlowLayout().setIntervalDistance(dip2px(this, 7));
-        mList.getCoverFlowLayout().setIntervalHeightDistance(dip2px(this, 8));
+        mList.getCoverFlowLayout().setIntervalDistance(dip2px(this, 50));
+        mList.getCoverFlowLayout().setIntervalHeightDistance(dip2px(this, 10));
 
         mList.setAdapter(adapter);
 //        mList.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
