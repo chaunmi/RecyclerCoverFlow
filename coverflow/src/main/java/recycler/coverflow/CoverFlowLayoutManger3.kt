@@ -113,12 +113,18 @@ class CoverFlowLayoutManger3(
     override fun onLayoutChildren(recycler: RecyclerView.Recycler, state: RecyclerView.State) {
         //如果没有item，直接返回
         //跳过preLayout，preLayout主要用于支持动画
-        if (itemCount <= 0 || state.isPreLayout) {
-            mOffsetAll = 0
+        val itemCount = state.itemCount
+        if (itemCount <= 0) {
+            removeAndRecycleAllViews(recycler)
             return
         }
+        if (state.isPreLayout) {
+            return
+        }
+
         mAllItemFrames.clear()
         mHasAttachedItems.clear()
+        mActualPosition2AdapterPosition.clear()
         //计算测量布局的宽高
         mDecoratedChildWidth = getItemWidth()
         mDecoratedChildHeight = getItemHeight()
@@ -130,13 +136,15 @@ class CoverFlowLayoutManger3(
         mStartX = (MAX_COUNT / 2) * intervalDistance  //最中间那个为起始item
         mStartY = 0
 
-        Log.i(TAG, " onLayoutChildren, itemWidth: $mDecoratedChildWidth, startX: $mStartX ")
-
-        detachAndScrapAttachedViews(recycler) //在布局之前，将所有的子View先Detach掉，放入到Scrap缓存中
+        Log.i(TAG, " onLayoutChildren, itemWidth: $mDecoratedChildWidth, startX: $mStartX  rect: ")
+        detachAndScrapAttachedViews(recycler)
         //首次时才需要回调
         if ((mRecycle == null || mState == null)) {  //在为初始化前调用smoothScrollToPosition 或者 scrollToPosition,只会记录位置
             mOffsetAll = calculateOffsetForPosition(selectedPos)          //所以初始化时需要滚动到对应位置
         }
+//        mOffsetAll = 0
+//        mLastSelectPosition = 0
+//        selectedPos = 0
         layoutItems(recycler, state, SCROLL_TO_LEFT)
         mRecycle = recycler
         mState = state
@@ -167,12 +175,15 @@ class CoverFlowLayoutManger3(
 
         if (state == null || state.isPreLayout) return
 
+        mRecycle?.apply {
+            detachAndScrapAttachedViews(this) //在布局之前，将所有的子View先Detach掉，放入到Scrap缓存中
+        }
 
         val position = centerPosition
 
         // 检查前后 20 个 item 是否需要绘制
-        var min = position - 10
-        var max = position + 10
+        var min = position - 5
+        var max = position + 5
 
 
         for(i in min until max) {
@@ -221,15 +232,20 @@ class CoverFlowLayoutManger3(
         var position = 0
         val scrollState = recyclerView?.scrollState
         Log.i(TAG, " layoutItems , offsetAll: $mOffsetAll, childCount: $childCount, " +
-                "displayFrame rect: $displayFrame , width: ${displayFrame.width()}, ChildWidth: $mDecoratedChildWidth, scrollState: $scrollState")
+                "displayFrame rect: $displayFrame , width: ${displayFrame.width()}, ChildWidth: $mDecoratedChildWidth, scrollState: $scrollState, interval: $intervalDistance")
 
         for (i in 0 until childCount) {
-            val child = getChildAt(i) ?: continue
+            val child = getChildAt(i)
+            if(child == null) {
+                Log.i(TAG, " getChildAt rect: position: $i is null ")
+                continue
+            }
             position = if (child.tag != null) {
                 val tag = checkTag(child.tag)
                 tag?.pos?:0
             } else {
                 getPosition(child)
+                Log.i(TAG, " layoutItems, getPosition ")
             }
             val rect = getFrame(position)
             if (!isNeedShow(displayFrame, rect)/*!Rect.intersects(displayFrame, rect)*/) { //Item没有在显示区域，就说明需要回收
@@ -283,7 +299,7 @@ class CoverFlowLayoutManger3(
             }
             layoutItem(scrap, rect) //将这个Item布局出来
             mActualPosition2AdapterPosition.put(i, actualPos)
-            Log.i(TAG, " layoutItem, addView rect: $rect , i: $i, actualPos: $actualPos")
+            Log.i(TAG, " layoutItem, addView rect: $rect , position: $i, actualPos: $actualPos, direction: $scrollDirection")
             mHasAttachedItems.put(i, true)
         }
     }
